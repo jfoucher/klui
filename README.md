@@ -6,6 +6,8 @@ I started working on this to be able to control my computer from an old computer
 
 Hopefully this will be better.
 
+Install dependencies by running `pip install -r requirements.txt`
+
 You can connect to any moonraker server with it, just run it like so :
 
 `python3 main.py 192.168.1.44`

@@ -1,4 +1,2 @@
 textual
-requests
 websockets
-httpx
