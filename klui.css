@@ -1,0 +1,48 @@
+#header {
+    height: 3;
+
+    background: grey;
+    color: white;
+    layout: horizontal;
+}
+#klippy_status {
+    padding: 1 1;
+}
+
+.header {
+    height: 100%;
+    width: 1fr;
+}
+#klippy_status {
+    width: 3;
+}
+#temps {
+    height: 100%;
+    width: 50%;
+}
+
+
+Powerbar {
+    width: 100%;
+    overflow-x: hidden;
+    height: 1;
+    color: red
+}
+
+#right {
+    height: 100%;
+    width: 50%;
+}
+#emergency_stop {
+    width: 20;
+}
+
+.temp_label {
+    width: 15;
+}
+.temp_input {
+    width: 1fr;
+}
+.temperature {
+    height: 4
+}

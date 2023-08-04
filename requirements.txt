@@ -1,0 +1,4 @@
+textual
+requests
+websockets
+httpx
