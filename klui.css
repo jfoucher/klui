@@ -33,9 +33,12 @@
 }
 #temps {
     height: 100%;
-    width: 50%;
+    width: 1fr;
 }
-
+#right {
+    height: 100%;
+    width: 1fr;
+}
 
 Powerbar {
     width: 100%;
@@ -44,10 +47,7 @@ Powerbar {
     color: red
 }
 
-#right {
-    height: 100%;
-    width: 50%;
-}
+
 
 
 .temp_label {

@@ -197,7 +197,7 @@ class TemperatureFan(Widget):
             self.set_set_temp(data[heater]["target"])
         if 'speed' in data[heater]:
             self.set_power(data[heater]['speed'])
-        if 'configfile' in data and 'settings' in data['configfile'] and heater in data['configfile']['settings'] and 'max_temp' in data['configfile']['settings'][heater_widget.id]:
+        if 'configfile' in data and 'settings' in data['configfile'] and heater in data['configfile']['settings'] and 'max_temp' in data['configfile']['settings'][heater]:
             self.set_max_temp(data['configfile']['settings'][heater]['max_temp'])
         
 

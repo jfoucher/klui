@@ -49,10 +49,10 @@ class HelloWorld(App):
             with Horizontal():
                 with VerticalScroll(id="temps"):
                     with Horizontal(id="home_buttons"):
-                        yield Button("Home All", classes="home_button unhomed", id="home_button", variant="warning")
-                        yield Button("X", classes="home_button unhomed", id="home_x_button", variant="warning")
-                        yield Button("Y", classes="home_button unhomed", id="home_y_button", variant="warning")
-                        yield Button("Z", classes="home_button unhomed", id="home_Z_button", variant="warning")
+                        yield Button("Home All", classes="home_button", id="home_all_button", variant="warning")
+                        yield Button("X", classes="home_button", id="home_x_button", variant="warning")
+                        yield Button("Y", classes="home_button", id="home_y_button", variant="warning")
+                        yield Button("Z", classes="home_button", id="home_z_button", variant="warning")
                 yield Placeholder(
                     id="right"
                 )
@@ -67,6 +67,7 @@ class HelloWorld(App):
             },
         })
 
+
     async def on_temperature_fan_change_set_temp(self, event: TemperatureFan.ChangeSetTemp):
         print(f"SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN={event.id} TARGET={event.temp}")
         # SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN=pi_temp TARGET=50
@@ -76,6 +77,23 @@ class HelloWorld(App):
                 "script": f"SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN={event.id} TARGET={event.temp}"
             },
         })
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Event handler called when a button is pressed."""
+        button_id = event.button.id
+        if button_id == "emergency_stop":
+            await self.em_stop()
+            await self.update_status()
+        elif button_id == 'home_all_button':
+            print('home All')
+        elif button_id == 'home_x_button':
+            print('home X')
+        elif button_id == 'home_y_button':
+            print('home Y')
+        elif button_id == 'home_z_button':
+            print('home Z')
+        elif button_id == 'qgl_button':
+            print('QGL')
 
 
     async def ws_message_handler(self):
@@ -176,8 +194,7 @@ class HelloWorld(App):
             
         elif method == "printer.objects.query":
             await self.printer_subscribe()
-            with open('data.json', 'w') as f:
-                json.dump(message['result']['status'], f)
+
             data = message['result']['status']
 
             if 'quad_gantry_level' in data:
@@ -249,12 +266,7 @@ class HelloWorld(App):
         # else:
         #     print("unhandled")
 
-    async def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Event handler called when a button is pressed."""
-        button_id = event.button.id
-        if button_id == "emergency_stop":
-            await self.em_stop()
-            await self.update_status()
+
 
     async def on_mount(self) -> None:
         self.url = args.url
