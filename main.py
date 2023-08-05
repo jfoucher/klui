@@ -18,6 +18,7 @@ class Printer():
     sensors = {}
     heaters = {}
     connected = False
+    homed_axes = ""
 
 class HelloWorld(App):
     status = {}
@@ -38,18 +39,20 @@ class HelloWorld(App):
     ]
 
     def compose(self) -> ComposeResult:
-        yield Container(
-            Horizontal(
-                Connected(id="klippy_status", classes="header"),
-                Button.error("Emergency stop", classes="header", id="emergency_stop")
-            ),
-            id="header",
-        )
+        with Container(id="header"):
+            with Horizontal():
+                yield Connected(id="klippy_status", classes="header")
+                yield Button.error("Emergency stop", classes="header", id="emergency_stop")
+                
+
         with Container(id="container"):
             with Horizontal():
-                yield VerticalScroll (
-                    id="temps"
-                )
+                with VerticalScroll(id="temps"):
+                    with Horizontal(id="home_buttons"):
+                        yield Button("Home All", classes="home_button unhomed", id="home_button", variant="warning")
+                        yield Button("X", classes="home_button unhomed", id="home_x_button", variant="warning")
+                        yield Button("Y", classes="home_button unhomed", id="home_y_button", variant="warning")
+                        yield Button("Z", classes="home_button unhomed", id="home_Z_button", variant="warning")
                 yield Placeholder(
                     id="right"
                 )
@@ -121,7 +124,17 @@ class HelloWorld(App):
 
 
             
-
+    def update_home_buttons(self, data):
+        if 'toolhead' in data and 'homed_axes' in data['toolhead']:
+            self.printer.homed_axes = data['toolhead']['homed_axes']
+            # TODO changed button colors depending on homed axes
+            
+            if "x" in data['toolhead']['homed_axes']:
+                self.query_one('#home_x_button').variant = "success"
+            if "y" in data['toolhead']['homed_axes']:
+                self.query_one('#home_y_button').variant = "success"
+            if "z" in data['toolhead']['homed_axes']:
+                self.query_one('#home_z_button').variant = "success"
 
     async def handle_message(self, message):
         method = None
@@ -167,6 +180,10 @@ class HelloWorld(App):
                 json.dump(message['result']['status'], f)
             data = message['result']['status']
 
+            if 'quad_gantry_level' in data:
+                qgl_btn = Button("QGL", classes="home_button unhomed", id="qgl_button", variant="warning")
+                await self.query_one('#home_buttons').mount(qgl_btn)
+            
             temps = self.query_one('#temps')
             for heater in data['heaters']['available_heaters']:
                 try :
@@ -219,7 +236,7 @@ class HelloWorld(App):
         elif method == "notify_status_update":
             data = message['params'][0]
             temps = self.query_one("#temps")
-
+            self.update_home_buttons(data)
             for heater_widget in temps.query(Heater):
                 heater_widget.update(data)
             for temp_fan in temps.query(TemperatureFan):
