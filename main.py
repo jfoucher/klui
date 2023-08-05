@@ -4,13 +4,13 @@ from textual.binding import Binding
 from textual.widgets import Label, Input, Header, Footer, Button, Static, Placeholder
 from textual.widget import Widget
 from textual.reactive import reactive
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 import argparse
 import asyncio
 import json
 import random
 import websockets
-from widgets.temp import Connected, Heater, CurrentTemp, SetTemp
+from widgets.temp import Connected, Heater, CurrentTemp, SetTemp, TemperatureFan
 
 
 class Printer():
@@ -47,7 +47,7 @@ class HelloWorld(App):
         )
         with Container(id="container"):
             with Horizontal():
-                yield Vertical (
+                yield VerticalScroll (
                     id="temps"
                 )
                 yield Placeholder(
@@ -63,6 +63,17 @@ class HelloWorld(App):
                 "script": f"SET_HEATER_TEMPERATURE HEATER={event.id} TARGET={event.temp}"
             },
         })
+
+    async def on_temperature_fan_change_set_temp(self, event: TemperatureFan.ChangeSetTemp):
+        print(f"SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN={event.id} TARGET={event.temp}")
+        # SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN=pi_temp TARGET=50
+        await app.message_queue.put({
+            "method":"printer.gcode.script",
+            "params":{
+                "script": f"SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN={event.id} TARGET={event.temp}"
+            },
+        })
+
 
     async def ws_message_handler(self):
         # your infinite loop here, for example:
@@ -118,7 +129,8 @@ class HelloWorld(App):
             # this is a reply to one of our messages
             m = next(iter([x for x in self.messages if "id" in message and x["id"] == message["id"]]), None)
             
-            self.messages = list(filter(lambda m: "id" in message and m["id"] != message["id"], self.messages))
+            if m != None:
+                self.messages = list(filter(lambda m: "id" in message and m["id"] != message["id"], self.messages))
 
             if "method" in m:
                 method = m["method"]
@@ -175,17 +187,44 @@ class HelloWorld(App):
                 if 'power' in data[heater]:
                     tmp.set_power(data[heater]['power'])
 
+                # set maximum temp for this heater
+                if 'configfile' in data and 'settings' in data['configfile'] and heater in data['configfile']['settings'] and 'max_temp' in data['configfile']['settings'][heater]:
+                    tmp.set_max_temp(data['configfile']['settings'][heater]['max_temp'])
+
+
+            for sensor in data['heaters']['available_sensors']:
+                if "temperature_fan" not in sensor:
+                    continue
+                sensor_id = sensor.replace("temperature_fan ", "temperature_fan")
+                sensor_name = sensor.replace("temperature_fan ", "")
+                try :
+                    tmp = temps.query_one('#'+sensor_id)
+                except Exception:
+                    tmp = TemperatureFan(
+                        id=sensor_id,
+                        classes="temperature",
+                    )
+                    
+                    await temps.mount(tmp)
+                tmp.set_name(sensor_name.replace('_', ' ').title())
+                if 'target' in data[sensor]:
+                    tmp.set_set_temp(data[sensor]['target'])
+                if 'temperature' in data[sensor]:
+                    tmp.set_current_temp(data[sensor]['temperature'])
+                if 'speed' in data[sensor]:
+                    tmp.set_power(data[sensor]['speed'])
+                if 'configfile' in data and 'settings' in data['configfile'] and sensor in data['configfile']['settings'] and 'max_temp' in data['configfile']['settings'][sensor]:
+                    tmp.set_max_temp(data['configfile']['settings'][sensor]['max_temp'])
+
         elif method == "notify_status_update":
             data = message['params'][0]
+            temps = self.query_one("#temps")
 
-            for heater_widget in self.query_one("#temps").query(Heater):
-                if heater_widget.id in data:
-                    if 'temperature' in data[heater_widget.id]:
-                        heater_widget.set_current_temp(data[heater_widget.id]["temperature"])
-                    if 'target' in data[heater_widget.id]:
-                        heater_widget.set_set_temp(data[heater_widget.id]["target"])
-                    if 'power' in data[heater_widget.id]:
-                        heater_widget.set_power(data[heater_widget.id]['power'])
+            for heater_widget in temps.query(Heater):
+                heater_widget.update(data)
+            for temp_fan in temps.query(TemperatureFan):
+                temp_fan.update(data)
+
         elif method == "server.sensors.list":
             print(message)
         elif method == "server.temperature_store":
