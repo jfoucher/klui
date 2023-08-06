@@ -1,7 +1,7 @@
 from textual.app import App, ComposeResult
 from textual import log
 from textual.binding import Binding
-from textual.widgets import Label, Input, Header, Footer, Button, Static, Placeholder
+from textual.widgets import LoadingIndicator, Label, Input, Header, Footer, Button, Static, Placeholder
 from textual.widget import Widget
 from textual.reactive import reactive
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
@@ -11,7 +11,8 @@ import json
 import random
 import websockets
 from widgets.temp import Connected, Heater, CurrentTemp, SetTemp, TemperatureFan
-
+from widgets.axis import Axis, CurrentPos
+from widgets.console import Console
 
 class Printer():
     objects = {}
@@ -24,6 +25,7 @@ class HelloWorld(App):
     status = {}
     messages = []
     url = ""
+    connected = reactive(False)
     printer = Printer()
     message_queue = asyncio.Queue()
     CSS_PATH = "klui.css"
@@ -50,64 +52,124 @@ class HelloWorld(App):
                 with VerticalScroll(id="temps"):
                     with Horizontal(id="home_buttons"):
                         yield Button("Home All", classes="home_button", id="home_all_button", variant="warning")
-                        yield Button("X", classes="home_button", id="home_x_button", variant="warning")
-                        yield Button("Y", classes="home_button", id="home_y_button", variant="warning")
-                        yield Button("Z", classes="home_button", id="home_z_button", variant="warning")
-                yield Placeholder(
+                    yield Axis(id="axis_x", classes="axis")
+                    yield Axis(id="axis_y", classes="axis")
+                    yield Axis(id="axis_z", classes="axis")
+                yield Console(
                     id="right"
                 )
+
+        yield LoadingIndicator()
         
         yield Footer()
 
+    def set_loading(self, loading: bool):
+        if loading:
+            self.query_one('#container').styles.display = "none"
+            self.query_one('#container').query_one('#temps').styles.display = "none"
+            self.query_one('#container').query_one('#right').styles.display = "none"
+            self.query_one(LoadingIndicator).styles.display = "block"
+            self.query_one(Connected).styles.background = "grey"  
+        else:
+            self.query_one('#container').styles.display = "block"
+            self.query_one('#temps').styles.display = "block"
+            self.query_one('#right').styles.display = "block"
+            self.query_one(LoadingIndicator).styles.display = "none"
+
+
     async def on_heater_change_set_temp(self, event: Heater.ChangeSetTemp):
+        script = f"SET_HEATER_TEMPERATURE HEATER={event.id} TARGET={event.temp}"
         await app.message_queue.put({
             "method":"printer.gcode.script",
             "params":{
-                "script": f"SET_HEATER_TEMPERATURE HEATER={event.id} TARGET={event.temp}"
+                "script": script
             },
         })
+        self.query_one(Console).add_line(script)
 
+    async def on_axis_change_position(self, event: Axis.ChangePosition):
+        axis = event.id.replace('axis_', '')
+        print(axis)
+        speed = "6000"
+        if axis == "z":
+            speed = "1000"
+        script = f"G1 {axis.capitalize()}{event.pos} F{speed}"
+        await app.message_queue.put({
+            "method":"printer.gcode.script",
+            "params":{
+                "script": script
+            },
+        })
+        self.query_one(Console).add_line(script)
+
+    async def on_console_send_gcode(self, event: Console.SendGcode):
+        await app.message_queue.put({
+            "method":"printer.gcode.script",
+            "params":{
+                "script": f"{event.gcode}"
+            },
+        })
 
     async def on_temperature_fan_change_set_temp(self, event: TemperatureFan.ChangeSetTemp):
         print(f"SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN={event.id} TARGET={event.temp}")
         # SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN=pi_temp TARGET=50
+        script = f"SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN={event.id} TARGET={event.temp}"
+        self.query_one(Console).add_line(script)
         await app.message_queue.put({
             "method":"printer.gcode.script",
             "params":{
-                "script": f"SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN={event.id} TARGET={event.temp}"
+                "script": script
             },
         })
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         """Event handler called when a button is pressed."""
+        # motors off : M84
         button_id = event.button.id
         if button_id == "emergency_stop":
             await self.em_stop()
             await self.update_status()
         elif button_id == 'home_all_button':
             print('home All')
+            script = f"G28"
         elif button_id == 'home_x_button':
             print('home X')
+            script = f"G28 X"
+            
         elif button_id == 'home_y_button':
             print('home Y')
+            script = f"G28 Y"
         elif button_id == 'home_z_button':
             print('home Z')
+            script = f"G28 Z"
         elif button_id == 'qgl_button':
             print('QGL')
+            script = f"QUAD_GANTRY_LEVEL"
+            # QUAD_GANTRY_LEVEL
+
+        await app.message_queue.put({
+            "method":"printer.gcode.script",
+            "params":{
+                "script": script
+            },
+        })
+
+        self.query_one(Console).add_line(script)
 
 
     async def ws_message_handler(self):
         # your infinite loop here, for example:
         async for websocket in websockets.connect("ws://"+self.url+'/websocket'):
             try:
+                self.set_loading(False)
                 print("connection OK")
                 while True:
                     try:
-                        res = await asyncio.wait_for(websocket.recv(), timeout=2)
+                        res = await asyncio.wait_for(websocket.recv(), timeout=5)
                     except asyncio.exceptions.TimeoutError:
                         print("receive timeout")
-                        self.query_one(Connected).connected = "✔"
-                        self.query_one(Connected).styles.background = "grey"
+                          
+                        self.set_loading(True)
                         if self.message_queue.empty():
                             await self.identify()
                             await self.update_status()
@@ -134,6 +196,7 @@ class HelloWorld(App):
                     await asyncio.sleep(0)
             except websockets.ConnectionClosed:
                 print("Connection closed")
+                self.set_loading(True)
                 # prepare messages to send for when we come back online
                 await self.identify()
                 await self.update_status()
@@ -143,16 +206,43 @@ class HelloWorld(App):
 
             
     def update_home_buttons(self, data):
-        if 'toolhead' in data and 'homed_axes' in data['toolhead']:
-            self.printer.homed_axes = data['toolhead']['homed_axes']
-            # TODO changed button colors depending on homed axes
-            
-            if "x" in data['toolhead']['homed_axes']:
-                self.query_one('#home_x_button').variant = "success"
-            if "y" in data['toolhead']['homed_axes']:
-                self.query_one('#home_y_button').variant = "success"
-            if "z" in data['toolhead']['homed_axes']:
-                self.query_one('#home_z_button').variant = "success"
+        if 'quad_gantry_level' in data:
+            if data['quad_gantry_level']['applied']:
+                self.query_one('#qgl_button').variant = "success"
+            else:
+                self.query_one('#qgl_button').variant = "warning"
+        if 'toolhead' in data:
+            if 'position' in data['toolhead']:
+                for i, axis in enumerate(["x", "y", "z"]):
+                    self.query_one(f"#axis_{axis}").query_one(CurrentPos).pos = str(round(data['toolhead']['position'][i], 2))
+
+            if 'homed_axes' in data['toolhead']:
+                hm = data['toolhead']['homed_axes']
+                self.printer.homed_axes = hm
+                # Change button colors depending on homed axes
+                qgl_btn = None
+                try: 
+                    qgl_btn = self.query_one('#qgl_button')
+                    qgl_btn.disabled = True
+                except:
+                    print('no QGL button')
+                if "x" in hm and "y" in hm:
+                    self.query_one(f"#home_z_button").disabled = False
+                else:
+                    # cannot home Z if X and Y are not homed first
+                    self.query_one(f"#home_z_button").disabled = True
+                if "x" in hm and "y" in hm and "z" in hm:
+                    self.query_one('#home_all_button').variant = "success"
+                    if qgl_btn:
+                        qgl_btn.disabled = False
+                else: 
+                    self.query_one('#home_all_button').variant = "warning"
+                for axis in ["x", "y", "z"]:
+                    if axis in hm:
+                        self.query_one(f"#home_{axis}_button").variant = "success"
+                    else: 
+                        self.query_one(f"#home_{axis}_button").variant = "warning"
+
 
     async def handle_message(self, message):
         method = None
@@ -162,9 +252,9 @@ class HelloWorld(App):
             
             if m != None:
                 self.messages = list(filter(lambda m: "id" in message and m["id"] != message["id"], self.messages))
+                if "method" in m:
+                    method = m["method"]
 
-            if "method" in m:
-                method = m["method"]
         if "method" in message:
             # This is a notificaiton from the printer
             method = message["method"]
@@ -191,16 +281,27 @@ class HelloWorld(App):
         elif method == "printer.objects.list":
             self.printer.objects = dict.fromkeys(message['result']['objects'], None)
             await self.get_printer_objects_details()
-            
+        elif method == "notify_gcode_response":
+            print('Got gcode response')
+            for line in message['params']:
+                self.query_one('#right').add_line(line)
+            print(message['params'])
         elif method == "printer.objects.query":
             await self.printer_subscribe()
 
             data = message['result']['status']
 
             if 'quad_gantry_level' in data:
-                qgl_btn = Button("QGL", classes="home_button unhomed", id="qgl_button", variant="warning")
-                await self.query_one('#home_buttons').mount(qgl_btn)
-            
+                try :
+                    qgl_btn = self.query_one('#qgl_button')
+                except Exception:
+                    variant = "warning"
+                    if data['quad_gantry_level']['applied']:
+                        variant = "success"
+                    qgl_btn = Button("QGL", classes="home_button", id="qgl_button", variant=variant, disabled=True)
+                    await self.query_one('#home_buttons').mount(qgl_btn)
+
+            self.update_home_buttons(data)
             temps = self.query_one('#temps')
             for heater in data['heaters']['available_heaters']:
                 try :
@@ -271,6 +372,7 @@ class HelloWorld(App):
     async def on_mount(self) -> None:
         self.url = args.url
         self.screen.styles.background = "darkblue"
+        self.set_loading(False)
         asyncio.Task(self.ws_message_handler())
 
         await self.identify()

@@ -26,7 +26,16 @@
 
     height: 3;
 }
-
+.axis {
+    height: 3;
+}
+.axis Button {
+    width: 8;
+    min-width: 8;
+}
+.axis Input {
+    width: 1fr;
+}
 
 #klippy_status {
     width: 3;
@@ -38,6 +47,14 @@
 #right {
     height: 100%;
     width: 1fr;
+}
+
+#console_log {
+    height: 1fr;
+    width: 1fr;
+    margin: 1;
+    border: solid white;
+    overflow-y: scroll;
 }
 
 Powerbar {
