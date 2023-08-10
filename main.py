@@ -73,7 +73,6 @@ class KluiScreen(Screen):
             with Horizontal():
                 yield Connected(id="klippy_status", classes="header")
                 yield Button.error("Emergency stop", classes="header", id="emergency_stop")
-                
 
         with Container(id="container"):
             with Horizontal():
@@ -88,7 +87,6 @@ class KluiScreen(Screen):
                 )
 
         yield LoadingIndicator()
-        
         yield Footer()
 
     def set_loading(self, loading: bool):
@@ -163,7 +161,6 @@ class KluiScreen(Screen):
         elif button_id == 'home_x_button':
             print('home X')
             script = f"G28 X"
-            
         elif button_id == 'home_y_button':
             print('home Y')
             script = f"G28 Y"
@@ -196,7 +193,6 @@ class KluiScreen(Screen):
                         res = await asyncio.wait_for(websocket.recv(), timeout=5)
                     except asyncio.exceptions.TimeoutError:
                         print("receive timeout")
-                          
                         self.set_loading(True)
                         if self.message_queue.empty():
                             await self.identify()
@@ -209,7 +205,6 @@ class KluiScreen(Screen):
 
                     if not self.message_queue.empty():
                         msg = await self.message_queue.get()
-                        
                         id = random.randbytes(32).hex()
                         msg["id"] = id
 
