@@ -4,8 +4,9 @@ from textual.binding import Binding
 from textual.widgets import LoadingIndicator, Label, Input, Header, Footer, Button, Static, Placeholder
 from textual.widget import Widget
 from textual.reactive import reactive
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
+from textual.containers import Grid, Container, Horizontal, Vertical, VerticalScroll
 import argparse
+
 import asyncio
 import json
 import random
@@ -13,6 +14,13 @@ import websockets
 from widgets.temp import Connected, Heater, CurrentTemp, SetTemp, TemperatureFan
 from widgets.axis import Axis, CurrentPos
 from widgets.console import Console
+from widgets.button import SmallButton
+from widgets.help import HelpScreen
+from textual.screen import ModalScreen, Screen
+from rich.segment import Segment
+from textual.strip import Strip
+from rich.style import Style
+from rich.text import Text
 
 class Printer():
     objects = {}
@@ -21,24 +29,44 @@ class Printer():
     connected = False
     homed_axes = ""
 
-class HelloWorld(App):
+
+class QuitScreen(ModalScreen):
+    """Screen with a dialog to quit."""
+    def compose(self) -> ComposeResult:
+        cancel = Text()
+        cancel.append("C", style="bold magenta")
+        cancel.append("ancel")
+        quit = Text()
+        quit.append("Q", style="bold red")
+        quit.append("uit")
+        yield Grid(
+            Label("Are you sure you want to quit?", id="question"),
+            SmallButton(quit, id="quit"),
+            SmallButton(cancel, id="cancel"),
+            id="quit_dialog",
+            classes="dialog"
+        )
+
+    def on_key(self, event):
+        if event.key and event.key == "q":
+            self.app.exit()
+        elif event.key and (event.key == "c" or event.key == "escape"):
+            self.app.pop_screen()
+
+    def on_small_button_pressed(self, event: SmallButton.Pressed) -> None:
+        if event.id == "quit":
+            self.app.exit()
+        else:
+            self.app.pop_screen()
+
+class KluiScreen(Screen):
     status = {}
     messages = []
     url = ""
     connected = reactive(False)
     printer = Printer()
     message_queue = asyncio.Queue()
-    CSS_PATH = "klui.css"
 
-    BINDINGS = [
-        Binding(key="q", action="quit", description="Quit the app"),
-        Binding(
-            key="question_mark",
-            action="help",
-            description="Show help screen",
-            key_display="?",
-        )
-    ]
 
     def compose(self) -> ComposeResult:
         with Container(id="header"):
@@ -268,12 +296,18 @@ class HelloWorld(App):
                 self.printer.connected = True
         elif method == "printer.emergency_stop":
             # remove emergency stop button and show firmware restart
-            self.query_one(Button).remove()
+            try:
+                self.query_one("#emergency_stop").remove()
+            except:
+                print('err')
         elif method == "notify_klippy_shutdown":
             self.query_one(Connected).connected = "✕"
             self.query_one(Connected).styles.background = "red"
             self.printer.connected = False
-            self.query_one(Button).remove()
+            try:
+                self.query_one("#emergency_stop").remove()
+            except:
+                print('err')
         elif method == "notify_klippy_ready":
             self.query_one(Connected).connected = "✔"
             self.query_one(Connected).styles.background = "green"
@@ -371,7 +405,7 @@ class HelloWorld(App):
 
     async def on_mount(self) -> None:
         self.url = args.url
-        self.screen.styles.background = "darkblue"
+
         self.set_loading(False)
         asyncio.Task(self.ws_message_handler())
 
@@ -439,13 +473,48 @@ class HelloWorld(App):
             },
         })
 
+class Klui(App):
+    SCREENS = {"main": KluiScreen()}
+
+    CSS_PATH = "klui.css"
+
+    BINDINGS = [
+        Binding(key="q", action="request_quit", description="Quit"),
+        Binding(
+            key="f1",
+            action="help",
+            description="Help",
+            key_display="F1",
+        ),
+        Binding(
+            key="f9",
+            action="stop",
+            description="STOP",
+            key_display="F9",
+        )
+    ]
+
+    def on_mount(self):
+        self.push_screen("main")
+
+    def action_request_quit(self) -> None:
+        """Action to display the quit dialog."""
+        self.push_screen(QuitScreen())
+
+    def action_help(self):
+        self.push_screen(HelpScreen())
+    
+    async def action_stop(self):
+        s = self.get_screen('main')
+        await s.em_stop()
+        await s.update_status()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("klui")
     parser.add_argument("url", help="url of the moonraker server")
     args = parser.parse_args()
     
-    app = HelloWorld()
+    app = Klui()
     app.run()
     
 

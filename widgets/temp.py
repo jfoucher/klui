@@ -112,9 +112,6 @@ class Heater(Widget):
         print(f"max {max}")
         self.query_one(Input).validators = [Number(minimum=0, maximum=max)]
 
-    async def on_mount(self) -> None:
-        self.styles.background = "blue"
-
 
     def update(self, data):
         heater = self.id
@@ -183,9 +180,6 @@ class TemperatureFan(Widget):
     def set_max_temp(self, max):
         print(f"max {max}")
         self.query_one(Input).validators = [Number(minimum=0, maximum=max)]
-
-    async def on_mount(self) -> None:
-        self.styles.background = "blue"
 
     def update(self, data):
         heater = self.id.replace("temperature_fan", "temperature_fan ")
