@@ -198,6 +198,7 @@ class KluiScreen(Screen):
                         self.query_one(f"#home_{axis}_button").variant = "warning"
 
 
+    # TODO use history API to get job list
     async def handle_message(self, message):
         method = None
         if "id" in message:

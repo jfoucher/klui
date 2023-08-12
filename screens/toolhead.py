@@ -1,5 +1,5 @@
 from textual.app import ComposeResult
-from textual.widgets import MarkdownViewer, Label, Input
+from textual.widgets import MarkdownViewer, Label, Input, Static
 from textual.widget import Widget
 from textual.containers import Vertical, VerticalScroll, Container, Horizontal
 from widgets.button import SmallButton
@@ -29,6 +29,7 @@ class ToolheadScreen(Screen):
     ]
     """Screen with a dialog to show toolhead info, such as position, home buttons, etc."""
     def compose(self) -> ComposeResult:
+        # TODO, control part fan with M106 S0 to M106 S255
         with Vertical(id="toolhead_screen"):
             yield KluiHeader(id="header")
             with Vertical(id='container'):
@@ -44,10 +45,29 @@ class ToolheadScreen(Screen):
                         ],
                         classes='axis_input',
                     )
+                    yield ReactiveLabel("Fan:   0%", id='part_fan')
+                    yield Input(
+                        placeholder="0",
+                        validators=[
+                            Number(minimum=0, maximum=60),
+                        ],
+                        classes='axis_input',
+                        id='part_fan_input'
+                    )
+                    yield Static("%")
             yield KluiFooter(id='footer', buttons=self.footer_buttons)
 
     def on_mount(self):
         self.query_one("#axis_x").classes = 'axis selected'
+
+    async def on_input_submitted(self, event: Input.Submitted):
+        if event.input.id == 'part_fan_input':
+            await self.app.get_screen('main').message_queue.put({
+                "method":"printer.gcode.script",
+                "params":{
+                    "script": f"M106 S{round(float(event.value) * 255 / 100)}"
+                },
+            })
         
 
     def on_key(self, event):
@@ -73,7 +93,7 @@ class ToolheadScreen(Screen):
             self.app.push_screen(ToolhelpScreen())
         else:
             self.query_one(KluiFooter).post_message(event)
-        print('sel', self.selected_axis)
+
 
     async def home_all(self):
         await self.app.get_screen('main').message_queue.put({
@@ -135,6 +155,7 @@ class ToolheadScreen(Screen):
             zoffset = data['gcode_move']['position'][2] - data['gcode_move']['gcode_position'][2]
 
             try:
+                # use goce_move -> homing_origin instead ?
                 self.query_one('#zoffset').label = "Z offset: {:3.3f}".format(zoffset)
             except:
                 pass

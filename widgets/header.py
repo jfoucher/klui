@@ -76,6 +76,7 @@ class KluiHeader(Widget):
             self.query_one('#fan').label = "Fan "+str(round(data['fan']['speed'] * 100))
 
         if 'idle_timeout' in data and 'state' in data['idle_timeout']:
+            # use print_stats instead
             state = data['idle_timeout']['state']
             if state == 'Printing':
                 self.query_one('#file').styles.display = "block"
