@@ -57,9 +57,12 @@ class KluiFooter(Widget, can_focus=True):
     async def on_small_button_pressed(self, event: SmallButton.Pressed):
         try:
             action = "request_quit" if event.id == "quit" else event.id
-            func = getattr(self.app, f"action_{action}")
+            if self.app.get_screen('toolhead').is_current and action == 'help':
+                self.app.push_screen("toolhelp")
+            else:
+                func = getattr(self.app, f"action_{action.replace(' ', '_')}")
 
-            await func()
+                await func()
         except AttributeError:
             print(f"action_{action} not found")
 

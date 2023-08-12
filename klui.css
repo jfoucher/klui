@@ -100,6 +100,9 @@ QuitScreen {
 #header ReactiveLabel#status {
     width: 10;
 }
+#header ReactiveLabel#qgl {
+    width: 3;
+}
 #header ReactiveLabel#fan {
     width: 9;
     align: center middle;
@@ -113,7 +116,9 @@ QuitScreen {
     padding: 0 1;
     width: 3;
 }
-
+#container {
+    background: $background;
+}
 #home_buttons {
     height: 3;
     layout: horizontal;
@@ -130,23 +135,40 @@ QuitScreen {
 .axis {
     height: 1;
     align:center middle;
-    background: $background-lighten-1;
+    background: $background;
+}
+.axis.selected {
+    background: $background-lighten-3;
 }
 .axis .axis_name {
     color: coral;
     text-style: bold;
 }
-.axis:focus {
-    background: $background-lighten-3;
+.axis .axis_homed {
+    color: $foreground;
+    background: orange;
+    text-style: bold;
+    margin: 0 1;
+    padding: 0 1;
+    min-width: 9;
+    text-align: center
 }
+.axis .axis_pos {
+    text-align: center;
+    color: $accent;
+    min-width: 9;
+}
+.offset {
+    background: $background;
+    height: 1;
+    margin: 1 0;
+}
+
 .axis SmallButton {
     width: 8;
     min-width: 8;
     background: $background-lighten-2;
     margin: 0 1;
-}
-.axis Input {
-    width: 1fr;
 }
 
 #klippy_status {
@@ -183,13 +205,14 @@ Heater TempName, TemperatureFan TempName {
     color:coral;
 }
 
-.temp_input {
+.temp_input, .axis_input {
     width: 10;
     height: 1;
     border: none;
     margin: 0 1;
-
+    background: $surface;
 }
+
 .temperature {
     height: 2
 }

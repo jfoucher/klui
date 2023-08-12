@@ -16,12 +16,16 @@ KLUI is a simple controller for a klipper-enabled 3D printer. It requires the Mo
 ## Features
 
 - View all the reported temperatures and change their targets, for both heaters and temperature fans.
+- Home X, Y and Z axes (I do not have another type of printer to test)
+- View the position of X Y and Z axes
+- Do a quad gantry leveling procedure if your printer supports it
+- Show the status of the printer (printing or not, homed, QGL, filament sensors, steppers active, system load)
 - View this help text
 
 ## Shortcuts
-All shortcuts have the first letter highlighted, representing the key to be pressed to trigger the action.
+Some shortcuts have the first letter highlighted, representing the key to be pressed to trigger the action.
 
-Most shortcuts are displayed in the app footer.
+Most shortcuts are displayed in the app footer, the number represents the function key to press to launch the action.
 For example, press the `F2` key to exit the app. The will popup a confirmation dialog. press `q` to quit, or `c` to cancel.
 If you have a mouse, you can also click on the shortcuts as if they were buttons to trigger the action.
 

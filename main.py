@@ -18,6 +18,7 @@ from widgets.console import Console
 from screens.quit import QuitScreen
 from screens.toolhead import ToolheadScreen
 from screens.help import HelpScreen
+from screens.toolhelp import ToolhelpScreen
 from widgets.header import KluiHeader, Connected
 from widgets.footer import KluiFooter
 from widgets.temperature import KluiTemperature
@@ -34,9 +35,18 @@ class Printer():
     def merge(self, old, new):
         for key, value in new.items():
             if type(value) is dict:
-                old[key] = self.merge(old[key], new[key])
+                if type(old) is dict:
+                    if key in old:
+                        old[key] = self.merge(old[key], value)
+                    else:
+                        old[key] = value
+                else:
+                    old = {key: value}
             else:
-                old[key] = value;
+                if type(old) is dict:
+                    old[key] = value
+                else:
+                    old = {key: value}
         return old
 
     def update(self, data):
@@ -206,18 +216,22 @@ class KluiScreen(Screen):
         if method == "server.info":
             self.status = message['result']
             if self.status and self.status['klippy_connected'] == True  and self.status['klippy_state'] == "ready":
-                print("connected")
                 self.query_one(Connected).connected = "✔"
                 self.query_one(Connected).styles.background = "green"
                 self.printer.connected = True
+                self.printer.update({'connected': True})
         elif method == "printer.emergency_stop" or method == "notify_klippy_shutdown":
+            self.printer.update({'connected': False })
             self.query_one(Connected).connected = "✕"
             self.query_one(Connected).styles.background = "red"
             self.printer.connected = False
+            self.printer.update({'connected': False})
         elif method == "notify_klippy_ready":
+            self.printer.update({'connected': True })
             self.query_one(Connected).connected = "✔"
             self.query_one(Connected).styles.background = "green"
             self.printer.connected = True
+            self.printer.update({'connected': True})
         elif method == "printer.objects.list":
             self.printer.objects = dict.fromkeys(message['result']['objects'], None)
             await self.get_printer_objects_details()
@@ -230,7 +244,7 @@ class KluiScreen(Screen):
             await self.printer_subscribe()
 
             data = message['result']['status']
-            self.printer.data = data
+            self.printer.update(data)
             await self.query_one('#header').update(data)
             try:
                 await self.query_one('#temperature').update(data)
@@ -253,7 +267,7 @@ class KluiScreen(Screen):
                 pass
 
             await self.app.get_screen('toolhead').update(self.printer.data)
-            
+
             # temps = self.query_one("#temps")
             # self.update_home_buttons(data)
             # for heater_widget in temps.query(Heater):
@@ -343,6 +357,7 @@ class Klui(App):
     SCREENS = {
         "main": KluiScreen(),
         "help": HelpScreen(),
+        "toolhelp": ToolhelpScreen(),
         "toolhead": ToolheadScreen(),
         "quit": QuitScreen(),
     }
@@ -414,6 +429,7 @@ class Klui(App):
         self.push_screen('help')
 
     async def action_toolhead(self):
+        await self.get_screen('toolhead').update(self.app.get_screen('main').printer.data)
         self.push_screen('toolhead')
 
     async def action_misc(self):
@@ -421,8 +437,12 @@ class Klui(App):
     async def action_home(self):
         print('home')
         await self.get_screen('toolhead').home()
-    async def action_home_all(self):
+
+    async def action_all(self):
         await self.get_screen('toolhead').home_all()
+
+    async def action_qgl(self):
+        await self.get_screen('toolhead').qgl()
 
     async def action_print(self):
         print('print')
