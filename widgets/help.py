@@ -9,49 +9,23 @@ from rich.text import Text
 
 
 HELP_TEXT = """\
-# Markdown Viewer
+# KLUI Help
 
-This is an example of Textual's `MarkdownViewer` widget.
-
+KLUI is a simple controller for a klipper-enabled 3D printer. It requires the Moonraker server as well.
 
 ## Features
 
-Markdown syntax and extensions are supported.
+- View all the reported temperatures and change their targets, for both heaters and temperature fans.
+- View this help text
 
-- Typography *emphasis*, **strong**, `inline code` etc.
-- Headers
-- Lists (bullet and ordered)
-- Syntax highlighted code blocks
-- Tables!
+## Shortcuts
+All shortcuts have the first letter highlighted, representing the key to be pressed to trigger the action.
 
-## Tables
+Most shortcuts are displayed in the app footer.
+For example, press the `q` key to exit the app. The will popup a confirmation dialog. press `q` again to quit, or `c` to cancel.
+If you have a mouse, you can also click on the shortcuts as if they were buttons to trigger the action.
 
-Tables are displayed in a DataTable widget.
-
-| Name            | Type   | Default | Description                        |
-| --------------- | ------ | ------- | ---------------------------------- |
-| `show_header`   | `bool` | `True`  | Show the table header              |
-| `fixed_rows`    | `int`  | `0`     | Number of fixed rows               |
-| `fixed_columns` | `int`  | `0`     | Number of fixed columns            |
-| `zebra_stripes` | `bool` | `False` | Display alternating colors on rows |
-| `header_height` | `int`  | `1`     | Height of header row               |
-| `show_cursor`   | `bool` | `True`  | Show a cell cursor                 |
-
-
-## Code Blocks
-
-Code blocks are syntax highlighted, with guidelines.
-
-```python
-class ListViewExample(App):
-    def compose(self) -> ComposeResult:
-        yield ListView(
-            ListItem(Label("One")),
-            ListItem(Label("Two")),
-            ListItem(Label("Three")),
-        )
-        yield Footer()
-```
+You can also press `escape` to exit any modal window that may be open to return to the main screen.
 """
 
 
