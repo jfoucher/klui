@@ -40,6 +40,7 @@ class KluiHeader(Widget):
                 yield ReactiveLabel("Step", id="motors")
 
                 yield ReactiveLabel("Fil", id="filament")
+                yield ReactiveLabel("Fan", id="fan")
                 yield Static()
                 yield ReactiveLabel("Load", id="sysload")
     
@@ -53,6 +54,16 @@ class KluiHeader(Widget):
                     variant = "success"
                 # qgl_btn = Button("QGL", classes="home_button", id="qgl_button", variant=variant, disabled=True)
                 # await self.query_one('#home_buttons').mount(qgl_btn)
+
+        if 'fan' in data and 'speed' in data['fan']:
+            if data['fan']['speed'] < 0.3:
+                self.query_one('#fan').styles.background = "green"
+            elif data['fan']['speed'] < 0.6:
+                self.query_one('#fan').styles.background = "orange"
+            else:
+                self.query_one('#fan').styles.background = "red"
+
+            self.query_one('#fan').label = "Fan "+str(round(data['fan']['speed'] * 100))
 
         if 'idle_timeout' in data and 'state' in data['idle_timeout']:
             state = data['idle_timeout']['state']
@@ -92,7 +103,7 @@ class KluiHeader(Widget):
                     if s:
                         return True
                 return False
-            print(data['stepper_enable'])
+
             s = list(data['stepper_enable']['steppers'].values())
             motors = self.query_one('#motors')
             if steppers_enabled(s):
@@ -100,6 +111,15 @@ class KluiHeader(Widget):
             else:
                 motors.styles.background = 'darkred'
 
+        for k in data.keys():
+            if 'filament_switch_sensor' in k and 'filament_detected' in data[k]:
+                if data[k]['filament_detected']:
+                    self.query_one('#filament').styles.background = 'green'
+                else: 
+                    self.query_one('#filament').styles.background = 'red'
+
+
+                break
         if 'system_stats' in data and 'sysload' in data['system_stats']:
             l = data['system_stats']['sysload']
             self.query_one('#sysload').label = l

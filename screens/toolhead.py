@@ -33,7 +33,7 @@ class ToolheadScreen(Screen):
             yield KluiFooter(id='footer', buttons=self.footer_buttons)
 
     def on_key(self, event):
-        print(event)
+
         if event.key and event.key == "up":
             self.focus_previous()
         elif event.key and event.key == "down":
@@ -79,7 +79,7 @@ class ToolheadScreen(Screen):
                         a = self.query_one(f"#axis_{axis}").query_one('.axis_pos')
                         a.pos = data['toolhead']['position'][i]
                     except:
-                        print("could not get axis widget")
+                        pass
             # if 'homed_axes' in data['toolhead']:
             #     hm = data['toolhead']['homed_axes']
             #     self.printer.homed_axes = hm

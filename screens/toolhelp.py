@@ -21,7 +21,7 @@ Pressing the up and down arrow keys will select one of the axes.
 - Press `F5` to set the position of the selected axis
 - Press `F6` to move the selected axis in a positive direction
 - Press `F7` to move the selected axis in a negative direction
-- Press `F8` to trigger an emergenvy shutdown
+- Press `F8` to trigger an emergency shutdown
 
 """
 

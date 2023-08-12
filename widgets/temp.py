@@ -23,7 +23,6 @@ class SetTemp(Label):
 
     def render(self) -> str:
         form = "{:3.0f}°C".format(self.temp)
-        print(form)
         return f"Target: {form}"
 
 class Powerbar(Label):
