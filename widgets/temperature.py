@@ -1,29 +1,9 @@
-from textual.app import App, ComposeResult
-from textual import log
-from textual.binding import Binding
-from textual.widgets import LoadingIndicator, Label, Input, Header, Footer, Button, Static, Placeholder
+from textual.app import ComposeResult
+from textual.widgets import Label
 from textual.widget import Widget
 from textual.reactive import reactive
-from textual.containers import Grid, Container, Horizontal, Vertical, VerticalScroll
-import argparse
 
-import asyncio
-import json
-import random
-import websockets
-from widgets.temp import Connected, Heater, CurrentTemp, SetTemp, TemperatureFan
-from widgets.axis import Axis, CurrentPos
-from widgets.console import Console
-from widgets.button import SmallButton
-from widgets.quit import QuitScreen
-from widgets.help import HelpScreen
-from widgets.header import KluiHeader
-from widgets.footer import KluiFooter
-from textual.screen import ModalScreen, Screen
-from rich.segment import Segment
-from textual.strip import Strip
-from rich.style import Style
-from rich.text import Text
+from widgets.temp import Heater, TemperatureFan
 
 class KluiTemperature(Widget):
     heaters = reactive(['extruder'])

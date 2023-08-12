@@ -1,16 +1,11 @@
 from textual.app import ComposeResult
-from textual.widgets import Label, Input, Button, RichLog
+from textual.widgets import Input, RichLog
 from textual.widget import Widget
-from textual.reactive import reactive
+
 from textual.containers import Container, Vertical
 
-from textual.validation import Number
-from textual.message import Message
-from textual.geometry import Size
-from textual.strip import Strip
-from textual.scroll_view import ScrollView
 
-from rich.segment import Segment
+from textual.message import Message
 import re
 from functools import lru_cache
 from typing import Callable, List

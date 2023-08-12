@@ -1,28 +1,24 @@
-from textual.app import App, ComposeResult
-from textual import log
-from textual.binding import Binding
-from textual.widgets import LoadingIndicator, Label, Input, Header, Footer, Button, Static, Placeholder
+from textual.app import ComposeResult
+from textual.widgets import Label, Static
 from textual.widget import Widget
 from textual.reactive import reactive
-from textual.containers import Grid, Container, Horizontal, Vertical, VerticalScroll
-import argparse
-
-import asyncio
-import json
-import random
-import websockets
-from widgets.temp import Connected, Heater, CurrentTemp, SetTemp, TemperatureFan
-from widgets.axis import Axis, CurrentPos
-from widgets.console import Console
-from widgets.button import SmallButton
-from widgets.quit import QuitScreen
-from widgets.help import HelpScreen
-from textual.screen import ModalScreen, Screen
-from rich.segment import Segment
-from textual.strip import Strip
-from rich.style import Style
-from rich.text import Text
+from textual.containers import Container, Horizontal
 from rich.console import RenderableType
+
+class Connected(Label):
+    """Show connection status"""
+
+    connected = reactive("✕")
+    
+
+    # def compose(self) -> ComposeResult:
+    #     yield(Label(self.connected))
+
+    def render(self) -> str:
+        return f"{self.connected}"
+
+    async def on_mount(self) -> None:
+        self.styles.background = "red"
 
 class ReactiveLabel(Label):
     label = reactive("")

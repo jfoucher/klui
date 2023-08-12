@@ -1,30 +1,26 @@
 from textual.app import App, ComposeResult
 from textual import log
 from textual.binding import Binding
-from textual.widgets import LoadingIndicator, Label, Input, Header, Footer, Button, Static, Placeholder
-from textual.widget import Widget
+from textual.widgets import Button
+
 from textual.reactive import reactive
-from textual.containers import Grid, Container, Horizontal, Vertical, VerticalScroll
+from textual.containers import Vertical
 import argparse
 
 import asyncio
 import json
 import random
 import websockets
-from widgets.temp import Connected, Heater, CurrentTemp, SetTemp, TemperatureFan
+from widgets.temp import Heater, TemperatureFan
 from widgets.axis import Axis, CurrentPos
 from widgets.console import Console
-from widgets.button import SmallButton
+
 from widgets.quit import QuitScreen
 from widgets.help import HelpScreen
-from widgets.header import KluiHeader
+from widgets.header import KluiHeader, Connected
 from widgets.footer import KluiFooter
 from widgets.temperature import KluiTemperature
-from textual.screen import ModalScreen, Screen
-from rich.segment import Segment
-from textual.strip import Strip
-from rich.style import Style
-from rich.text import Text
+from textual.screen import Screen
 
 class Printer():
     objects = {}
@@ -136,6 +132,7 @@ class KluiScreen(Screen):
                         res = await asyncio.wait_for(websocket.recv(), timeout=5)
                     except asyncio.exceptions.TimeoutError:
                         print("receive timeout")
+                        self.query_one(Connected).styles.background = 'grey'
                         if self.message_queue.empty():
                             await self.identify()
                             await self.update_status()

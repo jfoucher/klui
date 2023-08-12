@@ -1,9 +1,9 @@
 from textual.app import ComposeResult
-from textual.widgets import Label, Input, ProgressBar
+from textual.widgets import Label, Input
 from textual.widget import Widget
 from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
-from textual.validation import Function, Number, ValidationResult, Validator
+from textual.validation import Number
 from textual.message import Message
 
 
@@ -30,7 +30,7 @@ class Powerbar(Label):
     """Show set temperature"""
     power = reactive(0.0)
     def render(self) -> str:
-        power_item = "[b]|[/]"
+
         p = self.power*45/100
         a = "" # power_item*int(self.power*45/100)
         fill = ""
@@ -45,10 +45,10 @@ class Powerbar(Label):
             a = a + f"[bold {color}]|[/]"
 
         pow = a + fill
-        return "[" + pow + "]"
+        return "[bold aquamarine3][[/]" + pow + "[bold aquamarine3]][/]"
 
-    # def on_mount(self):
-    #     self.styles.width = 10
+    def on_mount(self):
+        self.styles.width = 47
 
 class TempName(Label):
     """Show current temperature name"""
@@ -61,20 +61,7 @@ class TempName(Label):
     def on_mount(self):
         self.styles.width = 10
 
-class Connected(Label):
-    """Show connection status"""
 
-    connected = reactive("✕")
-    
-
-    # def compose(self) -> ComposeResult:
-    #     yield(Label(self.connected))
-
-    def render(self) -> str:
-        return f"{self.connected}"
-
-    async def on_mount(self) -> None:
-        self.styles.background = "red"
 
 
 
@@ -160,25 +147,20 @@ class TemperatureFan(Widget):
             self.id = id
 
     def compose(self) -> ComposeResult:
-        yield Vertical(
-            Horizontal(
-                Vertical(
-                    TempName(),
-                    SetTemp(),
-                    CurrentTemp(),
-                    
-                    classes="temp_label",
-                ),
+        with Vertical():
+            yield Horizontal(
+                TempName(),
+                CurrentTemp(),
+                SetTemp(),
                 Input(
                     placeholder=str(self.set_point),
                     validators=[
                         Number(minimum=0, maximum=60),
                     ],
                     classes="temp_input",
-                )
-            ),
-            Powerbar()
-        )
+                ),
+            )
+            yield Horizontal(Powerbar())
 
     def set_name(self, name):
         self.query_one(TempName).name = name
@@ -187,10 +169,13 @@ class TemperatureFan(Widget):
         self.query_one(CurrentTemp).current = current
 
     def set_set_temp(self, temp):
+        self.query_one(Input).placeholder = str(temp)
         self.query_one(SetTemp).temp = temp
+        self.query_one(SetTemp).refresh(layout=True)
 
     def set_power(self, power):
-        self.query_one(Powerbar).styles.width = str(round((power*100), 0))+ '%'
+        self.query_one(Powerbar).power = round(power*100)
+
     def set_max_temp(self, max):
         self.query_one(Input).validators = [Number(minimum=0, maximum=max)]
 
@@ -210,10 +195,10 @@ class TemperatureFan(Widget):
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         # Validate input temperature
-        print('changing temp fan temp ' + event.value)
+        self.app.query_one('#footer').focus()
         if len(event.validation_result.failures) == 0:
-            self.set_set_temp(event.value)
-            self.post_message(TemperatureFan.ChangeSetTemp(temp=event.value, id=self.id.replace("temperature_fan", "")))
+            self.set_set_temp(float(event.value))
+            self.post_message(TemperatureFan.ChangeSetTemp(temp=float(event.value), id=self.id.replace("temperature_fan", "")))
         else:
             print(event.validation_result.failures[0].description)
 

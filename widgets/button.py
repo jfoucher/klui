@@ -1,8 +1,5 @@
 
 from textual.widgets import Static
-from textual.reactive import reactive
-from rich.console import RenderableType
-from textual.color import Color
 from textual.message import Message
 from textual.binding import Binding
 

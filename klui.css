@@ -18,6 +18,8 @@ HozizontalScroll {
     text-align: center;
     width: 100%;
     padding: 1;
+    text-style: bold;
+    background: $error;
 }
 .dialog {
     grid-size: 2;
@@ -148,11 +150,11 @@ KluiFooter SmallButton {
     text-align: left;
 }
 
-Heater Vertical, Heater Horizontal {
+Heater Vertical, Heater Horizontal, TemperatureFan Vertical, TemperatureFan Horizontal {
     align: center middle;
 }
 
-Heater TempName {
+Heater TempName, TemperatureFan TempName {
     text-style: bold;
     color:coral;
 }

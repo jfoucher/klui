@@ -1,29 +1,11 @@
 from textual.app import App, ComposeResult
-from textual import log, events
-from textual.binding import Binding
-from textual.widgets import LoadingIndicator, Label, Input, Header, Footer, Button, Static, Placeholder
-from textual.widget import Widget
-from textual.reactive import reactive
-from textual.containers import Grid, Container, Horizontal, Vertical, VerticalScroll
-import argparse
 
-import asyncio
-import json
-import random
-import websockets
-from widgets.temp import Connected, Heater, CurrentTemp, SetTemp, TemperatureFan
-from widgets.axis import Axis, CurrentPos
-from widgets.console import Console
+from textual.widget import Widget
+
+from textual.containers import Horizontal
 from widgets.button import SmallButton
-from widgets.quit import QuitScreen
-from widgets.help import HelpScreen
-from widgets.header import KluiHeader
-from textual.screen import ModalScreen, Screen
-from rich.segment import Segment
-from textual.strip import Strip
-from rich.style import Style
 from rich.text import Text
-from typing import ClassVar, Optional
+from typing import ClassVar
 import rich.repr
 from widgets.button import SmallButton
 
