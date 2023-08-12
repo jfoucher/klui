@@ -13,13 +13,17 @@ VerticalScroll {
 HozizontalScroll {
     scrollbar-size: 1 1;
 }
-
+.title {
+    align: center middle;
+    text-align: center;
+    width: 100%;
+    padding: 1;
+}
 .dialog {
     grid-size: 2;
     grid-gutter: 0 0;
     grid-rows: 1fr 1;
     padding: 0 0;
-
 
     border: thick $background 80%;
     background: $surface;
@@ -31,14 +35,23 @@ HozizontalScroll {
     width: 40;
 }
 
+#help_dialog {
+    width: 80%;
+}
+
 SmallButton {
     height:1;
     padding:0;
     margin:0;
+
+    
     content-align: center middle;
 }
 SmallButton:focus {
-    text-style: bold reverse;
+    text-style: underline;
+}
+KluiFooter SmallButton {
+    width: auto;
 }
 QuitScreen {
     padding:0;
@@ -51,21 +64,45 @@ QuitScreen {
 }
 
 #header {
-    height: 3;
+    height: 1;
 
     background: $background;
     color: $foreground;
     layout: horizontal;
 }
+#header ReactiveLabel {
+    padding: 0 1;
+    width: 1fr;
+    content-align: center middle;
+}
+#header Static {
+    padding: 0;
+    width: 3fr;
+}
+#file {
+    background: green;
+}
+
+#header ReactiveLabel#completion {
+    width: 5;
+}
+#header ReactiveLabel#filament,#header ReactiveLabel#homed, #header ReactiveLabel#motors {
+    width: 4;
+}
+#header ReactiveLabel#sysload {
+    max-width: 6;
+    background: orange;
+}
+#header ReactiveLabel#status {
+    width: 10;
+}
 .header {
     height: 100%;
     width: 1fr;
 }
-#klippy_status {
-    padding: 1 1;
-}
-#emergency_stop {
-    width: 20;
+#header Connected#klippy_status {
+    padding: 0 1;
+    width: 3;
 }
 
 #home_buttons {
@@ -92,10 +129,7 @@ QuitScreen {
 #klippy_status {
     width: 3;
 }
-#temps {
-    height: 100%;
-    width: 1fr;
-}
+
 #right {
     height: 100%;
     width: 1fr;
@@ -109,15 +143,27 @@ QuitScreen {
     overflow-y: scroll;
 }
 
-
-
-
-.temp_label {
-    width: 15;
-}
-.temp_input {
+KluiFooter SmallButton {
     width: 1fr;
+    text-align: left;
+}
+
+Heater Vertical, Heater Horizontal {
+    align: center middle;
+}
+
+Heater TempName {
+    text-style: bold;
+    color:coral;
+}
+
+.temp_input {
+    width: 10;
+    height: 1;
+    border: none;
+    margin: 0 1;
+
 }
 .temperature {
-    height: 4
+    height: 2
 }

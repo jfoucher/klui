@@ -74,7 +74,7 @@ class HelpScreen(ModalScreen):
     """Screen with a dialog to show help."""
     def compose(self) -> ComposeResult:
         cancel = Text()
-        cancel.append("C", style="bold magenta")
+        cancel.append("C", style="bold green on white")
         cancel.append("lose")
         with Vertical(id="help_dialog", classes="dialog"):
             with VerticalScroll():

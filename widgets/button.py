@@ -6,7 +6,7 @@ from textual.color import Color
 from textual.message import Message
 from textual.binding import Binding
 
-class SmallButton(Static, can_focus=True):
+class SmallButton(Static):
     BINDINGS = [Binding("enter", "press", "Press Button", show=False)]
 
     class Pressed(Message):
@@ -22,5 +22,6 @@ class SmallButton(Static, can_focus=True):
 
     def render(self) -> str:
         return self.renderable
+        
     def action_press(self):
         self.post_message(self.Pressed(self.id))

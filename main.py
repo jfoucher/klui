@@ -15,7 +15,11 @@ from widgets.temp import Connected, Heater, CurrentTemp, SetTemp, TemperatureFan
 from widgets.axis import Axis, CurrentPos
 from widgets.console import Console
 from widgets.button import SmallButton
+from widgets.quit import QuitScreen
 from widgets.help import HelpScreen
+from widgets.header import KluiHeader
+from widgets.footer import KluiFooter
+from widgets.temperature import KluiTemperature
 from textual.screen import ModalScreen, Screen
 from rich.segment import Segment
 from textual.strip import Strip
@@ -30,35 +34,6 @@ class Printer():
     homed_axes = ""
 
 
-class QuitScreen(ModalScreen):
-    """Screen with a dialog to quit."""
-    def compose(self) -> ComposeResult:
-        cancel = Text()
-        cancel.append("C", style="bold magenta")
-        cancel.append("ancel")
-        quit = Text()
-        quit.append("Q", style="bold red")
-        quit.append("uit")
-        yield Grid(
-            Label("Are you sure you want to quit?", id="question"),
-            SmallButton(quit, id="quit"),
-            SmallButton(cancel, id="cancel"),
-            id="quit_dialog",
-            classes="dialog"
-        )
-
-    def on_key(self, event):
-        if event.key and event.key == "q":
-            self.app.exit()
-        elif event.key and (event.key == "c" or event.key == "escape"):
-            self.app.pop_screen()
-
-    def on_small_button_pressed(self, event: SmallButton.Pressed) -> None:
-        if event.id == "quit":
-            self.app.exit()
-        else:
-            self.app.pop_screen()
-
 class KluiScreen(Screen):
     status = {}
     messages = []
@@ -69,49 +44,21 @@ class KluiScreen(Screen):
 
 
     def compose(self) -> ComposeResult:
-        with Container(id="header"):
-            with Horizontal():
-                yield Connected(id="klippy_status", classes="header")
-                yield Button.error("Emergency stop", classes="header", id="emergency_stop")
-
-        with Container(id="container"):
-            with Horizontal():
-                with VerticalScroll(id="temps"):
-                    with Horizontal(id="home_buttons"):
-                        yield Button("Home All", classes="home_button", id="home_all_button", variant="warning")
-                    yield Axis(id="axis_x", classes="axis")
-                    yield Axis(id="axis_y", classes="axis")
-                    yield Axis(id="axis_z", classes="axis")
-                yield Console(
-                    id="right"
-                )
-
-        yield LoadingIndicator()
-        yield Footer()
-
-    def set_loading(self, loading: bool):
-        if loading:
-            self.query_one('#container').styles.display = "none"
-            self.query_one('#container').query_one('#temps').styles.display = "none"
-            self.query_one('#container').query_one('#right').styles.display = "none"
-            self.query_one(LoadingIndicator).styles.display = "block"
-            self.query_one(Connected).styles.background = "grey"  
-        else:
-            self.query_one('#container').styles.display = "block"
-            self.query_one('#temps').styles.display = "block"
-            self.query_one('#right').styles.display = "block"
-            self.query_one(LoadingIndicator).styles.display = "none"
+        with Vertical():
+            yield KluiHeader(id="header")
+            yield KluiTemperature(id='temperature')
+            yield KluiFooter(id='footer')
 
 
     async def on_heater_change_set_temp(self, event: Heater.ChangeSetTemp):
         script = f"SET_HEATER_TEMPERATURE HEATER={event.id} TARGET={event.temp}"
-        await app.message_queue.put({
+        await self.message_queue.put({
             "method":"printer.gcode.script",
             "params":{
                 "script": script
             },
         })
-        self.query_one(Console).add_line(script)
+        #self.query_one(Console).add_line(script)
 
     async def on_axis_change_position(self, event: Axis.ChangePosition):
         axis = event.id.replace('axis_', '')
@@ -120,16 +67,16 @@ class KluiScreen(Screen):
         if axis == "z":
             speed = "1000"
         script = f"G1 {axis.capitalize()}{event.pos} F{speed}"
-        await app.message_queue.put({
+        await self.message_queue.put({
             "method":"printer.gcode.script",
             "params":{
                 "script": script
             },
         })
-        self.query_one(Console).add_line(script)
+        #self.query_one(Console).add_line(script)
 
     async def on_console_send_gcode(self, event: Console.SendGcode):
-        await app.message_queue.put({
+        await self.message_queue.put({
             "method":"printer.gcode.script",
             "params":{
                 "script": f"{event.gcode}"
@@ -140,8 +87,8 @@ class KluiScreen(Screen):
         print(f"SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN={event.id} TARGET={event.temp}")
         # SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN=pi_temp TARGET=50
         script = f"SET_TEMPERATURE_FAN_TARGET TEMPERATURE_FAN={event.id} TARGET={event.temp}"
-        self.query_one(Console).add_line(script)
-        await app.message_queue.put({
+        #self.query_one(Console).add_line(script)
+        await self.message_queue.put({
             "method":"printer.gcode.script",
             "params":{
                 "script": script
@@ -152,10 +99,7 @@ class KluiScreen(Screen):
         """Event handler called when a button is pressed."""
         # motors off : M84
         button_id = event.button.id
-        if button_id == "emergency_stop":
-            await self.em_stop()
-            await self.update_status()
-        elif button_id == 'home_all_button':
+        if button_id == 'home_all_button':
             print('home All')
             script = f"G28"
         elif button_id == 'home_x_button':
@@ -172,28 +116,26 @@ class KluiScreen(Screen):
             script = f"QUAD_GANTRY_LEVEL"
             # QUAD_GANTRY_LEVEL
 
-        await app.message_queue.put({
+        await self.message_queue.put({
             "method":"printer.gcode.script",
             "params":{
                 "script": script
             },
         })
 
-        self.query_one(Console).add_line(script)
+        #self.query_one(Console).add_line(script)
 
 
     async def ws_message_handler(self):
         # your infinite loop here, for example:
         async for websocket in websockets.connect("ws://"+self.url+'/websocket'):
             try:
-                self.set_loading(False)
                 print("connection OK")
                 while True:
                     try:
                         res = await asyncio.wait_for(websocket.recv(), timeout=5)
                     except asyncio.exceptions.TimeoutError:
                         print("receive timeout")
-                        self.set_loading(True)
                         if self.message_queue.empty():
                             await self.identify()
                             await self.update_status()
@@ -219,7 +161,6 @@ class KluiScreen(Screen):
                     await asyncio.sleep(0)
             except websockets.ConnectionClosed:
                 print("Connection closed")
-                self.set_loading(True)
                 # prepare messages to send for when we come back online
                 await self.identify()
                 await self.update_status()
@@ -289,20 +230,10 @@ class KluiScreen(Screen):
                 self.query_one(Connected).connected = "✔"
                 self.query_one(Connected).styles.background = "green"
                 self.printer.connected = True
-        elif method == "printer.emergency_stop":
-            # remove emergency stop button and show firmware restart
-            try:
-                self.query_one("#emergency_stop").remove()
-            except:
-                print('err')
-        elif method == "notify_klippy_shutdown":
+        elif method == "printer.emergency_stop" or method == "notify_klippy_shutdown":
             self.query_one(Connected).connected = "✕"
             self.query_one(Connected).styles.background = "red"
             self.printer.connected = False
-            try:
-                self.query_one("#emergency_stop").remove()
-            except:
-                print('err')
         elif method == "notify_klippy_ready":
             self.query_one(Connected).connected = "✔"
             self.query_one(Connected).styles.background = "green"
@@ -312,82 +243,28 @@ class KluiScreen(Screen):
             await self.get_printer_objects_details()
         elif method == "notify_gcode_response":
             print('Got gcode response')
-            for line in message['params']:
-                self.query_one('#right').add_line(line)
+            # for line in message['params']:
+            #     self.query_one('#right').add_line(line)
             print(message['params'])
         elif method == "printer.objects.query":
             await self.printer_subscribe()
 
             data = message['result']['status']
+            await self.query_one('#header').update(data)
+            await self.query_one('#temperature').update(data)
 
-            if 'quad_gantry_level' in data:
-                try :
-                    qgl_btn = self.query_one('#qgl_button')
-                except Exception:
-                    variant = "warning"
-                    if data['quad_gantry_level']['applied']:
-                        variant = "success"
-                    qgl_btn = Button("QGL", classes="home_button", id="qgl_button", variant=variant, disabled=True)
-                    await self.query_one('#home_buttons').mount(qgl_btn)
-
-            self.update_home_buttons(data)
-            temps = self.query_one('#temps')
-            for heater in data['heaters']['available_heaters']:
-                try :
-                    tmp = temps.query_one('#'+heater)
-                except Exception:
-                    tmp = Heater(
-                        id=heater,
-                        classes="temperature",
-                    )
-                    
-                    await temps.mount(tmp)
-
-                tmp.set_name(heater.replace('_', ' ').title())
-                if 'target' in data[heater]:
-                    tmp.set_set_temp(data[heater]['target'])
-                if 'temperature' in data[heater]:
-                    tmp.set_current_temp(data[heater]['temperature'])
-                if 'power' in data[heater]:
-                    tmp.set_power(data[heater]['power'])
-
-                # set maximum temp for this heater
-                if 'configfile' in data and 'settings' in data['configfile'] and heater in data['configfile']['settings'] and 'max_temp' in data['configfile']['settings'][heater]:
-                    tmp.set_max_temp(data['configfile']['settings'][heater]['max_temp'])
-
-
-            for sensor in data['heaters']['available_sensors']:
-                if "temperature_fan" not in sensor:
-                    continue
-                sensor_id = sensor.replace("temperature_fan ", "temperature_fan")
-                sensor_name = sensor.replace("temperature_fan ", "")
-                try :
-                    tmp = temps.query_one('#'+sensor_id)
-                except Exception:
-                    tmp = TemperatureFan(
-                        id=sensor_id,
-                        classes="temperature",
-                    )
-                    
-                    await temps.mount(tmp)
-                tmp.set_name(sensor_name.replace('_', ' ').title())
-                if 'target' in data[sensor]:
-                    tmp.set_set_temp(data[sensor]['target'])
-                if 'temperature' in data[sensor]:
-                    tmp.set_current_temp(data[sensor]['temperature'])
-                if 'speed' in data[sensor]:
-                    tmp.set_power(data[sensor]['speed'])
-                if 'configfile' in data and 'settings' in data['configfile'] and sensor in data['configfile']['settings'] and 'max_temp' in data['configfile']['settings'][sensor]:
-                    tmp.set_max_temp(data['configfile']['settings'][sensor]['max_temp'])
-
+            # self.update_home_buttons(data)
+            
         elif method == "notify_status_update":
             data = message['params'][0]
-            temps = self.query_one("#temps")
-            self.update_home_buttons(data)
-            for heater_widget in temps.query(Heater):
-                heater_widget.update(data)
-            for temp_fan in temps.query(TemperatureFan):
-                temp_fan.update(data)
+            await self.query_one('#header').update(data)
+            await self.query_one('#temperature').update(data)
+            # temps = self.query_one("#temps")
+            # self.update_home_buttons(data)
+            # for heater_widget in temps.query(Heater):
+            #     heater_widget.update(data)
+            # for temp_fan in temps.query(TemperatureFan):
+            #     temp_fan.update(data)
 
         elif method == "server.sensors.list":
             print(message)
@@ -401,7 +278,6 @@ class KluiScreen(Screen):
     async def on_mount(self) -> None:
         self.url = args.url
 
-        self.set_loading(False)
         asyncio.Task(self.ws_message_handler())
 
         await self.identify()
@@ -476,28 +352,70 @@ class Klui(App):
     BINDINGS = [
         Binding(key="q", action="request_quit", description="Quit"),
         Binding(
-            key="f1",
+            key="h",
             action="help",
             description="Help",
-            key_display="F1",
+            key_display="H",
         ),
         Binding(
-            key="f9",
+            key="t",
+            action="toolhead",
+            description="Toolhead",
+            key_display="T",
+        ),
+        Binding(
+            key="p",
+            action="print",
+            description="Print",
+            key_display="P",
+        ),
+        Binding(
+            key="E",
+            action="extruder",
+            description="Extruder",
+            key_display="E",
+        ),
+        Binding(
+            key="M",
+            action="misc",
+            description="Misc",
+            key_display="M",
+        ),
+
+        Binding(
+            key="c",
+            action="console",
+            description="Console",
+            key_display="C",
+        ),
+
+
+        Binding(
+            key="s",
             action="stop",
             description="STOP",
-            key_display="F9",
+            key_display="S",
         )
     ]
 
     def on_mount(self):
         self.push_screen("main")
 
-    def action_request_quit(self) -> None:
+    async def action_request_quit(self) -> None:
         """Action to display the quit dialog."""
         self.push_screen(QuitScreen())
 
-    def action_help(self):
+    async def action_help(self):
         self.push_screen(HelpScreen())
+
+    async def action_toolhead(self):
+        print('toolhead')
+
+    async def action_misc(self):
+        print('misc')
+
+    async def action_print(self):
+        print('print')
     
     async def action_stop(self):
         s = self.get_screen('main')
@@ -507,6 +425,7 @@ class Klui(App):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("klui")
     parser.add_argument("url", help="url of the moonraker server")
+
     args = parser.parse_args()
     
     app = Klui()
