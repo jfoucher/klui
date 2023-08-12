@@ -4,7 +4,7 @@ from textual.binding import Binding
 from textual.widgets import Button
 
 from textual.reactive import reactive
-from textual.containers import Vertical
+from textual.containers import Vertical, Container
 import argparse
 
 import asyncio
@@ -15,8 +15,9 @@ from widgets.temp import Heater, TemperatureFan
 from widgets.axis import Axis, CurrentPos
 from widgets.console import Console
 
-from widgets.quit import QuitScreen
-from widgets.help import HelpScreen
+from screens.quit import QuitScreen
+from screens.toolhead import ToolheadScreen
+from screens.help import HelpScreen
 from widgets.header import KluiHeader, Connected
 from widgets.footer import KluiFooter
 from widgets.temperature import KluiTemperature
@@ -28,6 +29,18 @@ class Printer():
     heaters = {}
     connected = False
     homed_axes = ""
+    data = {}
+
+    def merge(self, old, new):
+        for key, value in new.items():
+            if type(value) is dict:
+                old[key] = self.merge(old[key], new[key])
+            else:
+                old[key] = value;
+        return old
+
+    def update(self, data):
+        self.data = self.merge(self.data, data)
 
 
 class KluiScreen(Screen):
@@ -42,7 +55,8 @@ class KluiScreen(Screen):
     def compose(self) -> ComposeResult:
         with Vertical():
             yield KluiHeader(id="header")
-            yield KluiTemperature(id='temperature')
+            with Container(id='container'):
+                yield KluiTemperature(id='temperature')
             yield KluiFooter(id='footer')
 
 
@@ -90,37 +104,6 @@ class KluiScreen(Screen):
                 "script": script
             },
         })
-
-    async def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Event handler called when a button is pressed."""
-        # motors off : M84
-        button_id = event.button.id
-        if button_id == 'home_all_button':
-            print('home All')
-            script = f"G28"
-        elif button_id == 'home_x_button':
-            print('home X')
-            script = f"G28 X"
-        elif button_id == 'home_y_button':
-            print('home Y')
-            script = f"G28 Y"
-        elif button_id == 'home_z_button':
-            print('home Z')
-            script = f"G28 Z"
-        elif button_id == 'qgl_button':
-            print('QGL')
-            script = f"QUAD_GANTRY_LEVEL"
-            # QUAD_GANTRY_LEVEL
-
-        await self.message_queue.put({
-            "method":"printer.gcode.script",
-            "params":{
-                "script": script
-            },
-        })
-
-        #self.query_one(Console).add_line(script)
-
 
     async def ws_message_handler(self):
         # your infinite loop here, for example:
@@ -247,15 +230,30 @@ class KluiScreen(Screen):
             await self.printer_subscribe()
 
             data = message['result']['status']
+            self.printer.data = data
             await self.query_one('#header').update(data)
-            await self.query_one('#temperature').update(data)
+            try:
+                await self.query_one('#temperature').update(data)
+            except:
+                pass
+            
+            await self.app.get_screen('toolhead').update(self.printer.data)
+            
 
             # self.update_home_buttons(data)
             
         elif method == "notify_status_update":
             data = message['params'][0]
+            self.printer.update(data)
+
             await self.query_one('#header').update(data)
-            await self.query_one('#temperature').update(data)
+            try:
+                await self.query_one('#temperature').update(data)
+            except:
+                pass
+
+            await self.app.get_screen('toolhead').update(self.printer.data)
+            
             # temps = self.query_one("#temps")
             # self.update_home_buttons(data)
             # for heater_widget in temps.query(Heater):
@@ -342,74 +340,89 @@ class KluiScreen(Screen):
         })
 
 class Klui(App):
-    SCREENS = {"main": KluiScreen()}
+    SCREENS = {
+        "main": KluiScreen(),
+        "help": HelpScreen(),
+        "toolhead": ToolheadScreen(),
+        "quit": QuitScreen(),
+    }
 
     CSS_PATH = "klui.css"
 
-    BINDINGS = [
-        Binding(key="q", action="request_quit", description="Quit"),
-        Binding(
-            key="h",
-            action="help",
-            description="Help",
-            key_display="H",
-        ),
-        Binding(
-            key="t",
-            action="toolhead",
-            description="Toolhead",
-            key_display="T",
-        ),
-        Binding(
-            key="p",
-            action="print",
-            description="Print",
-            key_display="P",
-        ),
-        Binding(
-            key="E",
-            action="extruder",
-            description="Extruder",
-            key_display="E",
-        ),
-        Binding(
-            key="M",
-            action="misc",
-            description="Misc",
-            key_display="M",
-        ),
+    # BINDINGS = [
+    #     Binding(key="q", action="request_quit", description="Quit"),
+    #     Binding(
+    #         key="h",
+    #         action="help",
+    #         description="Help",
+    #         key_display="H",
+    #     ),
+    #     Binding(
+    #         key="t",
+    #         action="toolhead",
+    #         description="Toolhead",
+    #         key_display="T",
 
-        Binding(
-            key="c",
-            action="console",
-            description="Console",
-            key_display="C",
-        ),
+    #     ),
+    #     Binding(
+    #         key="p",
+    #         action="print",
+    #         description="Print",
+    #         key_display="P",
+
+    #     ),
+    #     Binding(
+    #         key="E",
+    #         action="extruder",
+    #         description="Extruder",
+    #         key_display="E",
+
+    #     ),
+    #     Binding(
+    #         key="M",
+    #         action="misc",
+    #         description="Misc",
+    #         key_display="M",
+
+    #     ),
+
+    #     Binding(
+    #         key="c",
+    #         action="console",
+    #         description="Console",
+    #         key_display="C",
+    #     ),
 
 
-        Binding(
-            key="s",
-            action="stop",
-            description="STOP",
-            key_display="S",
-        )
-    ]
+    #     Binding(
+    #         key="s",
+    #         action="stop",
+    #         description="STOP",
+    #         key_display="S",
+    #         priority=True
+    #     )
+    # ]
 
     def on_mount(self):
         self.push_screen("main")
 
     async def action_request_quit(self) -> None:
         """Action to display the quit dialog."""
-        self.push_screen(QuitScreen())
+        self.push_screen('quit')
 
     async def action_help(self):
-        self.push_screen(HelpScreen())
+        self.push_screen('help')
 
     async def action_toolhead(self):
-        print('toolhead')
+        self.push_screen('toolhead')
 
     async def action_misc(self):
         print('misc')
+    async def action_home(self):
+        print('home')
+        await self.get_screen('toolhead').home()
+    async def action_home_all(self):
+        await self.get_screen('toolhead').home_all()
 
     async def action_print(self):
         print('print')
@@ -418,6 +431,9 @@ class Klui(App):
         s = self.get_screen('main')
         await s.em_stop()
         await s.update_status()
+    
+    async def action_close(self):
+        self.pop_screen()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("klui")

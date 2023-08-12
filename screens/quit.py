@@ -18,7 +18,7 @@ class QuitScreen(ModalScreen):
         yield Grid(
             Label("Are you sure you want to quit?", id="question"),
             SmallButton(quit, id="quit"),
-            SmallButton(cancel, id="cancel"),
+            SmallButton(cancel, id="close"),
             id="quit_dialog",
             classes="dialog"
         )
@@ -26,7 +26,7 @@ class QuitScreen(ModalScreen):
     def on_key(self, event):
         if event.key and event.key == "q":
             self.app.exit()
-        elif event.key and (event.key == "c" or event.key == "escape"):
+        elif event.key and(event.key == "C" or event.key == "c" or event.key == "escape"):
             self.app.pop_screen()
 
     def on_small_button_pressed(self, event: SmallButton.Pressed) -> None:

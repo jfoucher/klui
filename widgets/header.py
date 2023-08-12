@@ -18,7 +18,7 @@ class Connected(Label):
         return f"{self.connected}"
 
     async def on_mount(self) -> None:
-        self.styles.background = "red"
+        self.styles.background = "grey"
 
 class ReactiveLabel(Label):
     label = reactive("")
@@ -36,10 +36,10 @@ class KluiHeader(Widget):
                 yield ReactiveLabel("Unkown", id="status")
                 yield ReactiveLabel("", id="file")
                 yield ReactiveLabel("0%", id="completion")
-                yield ReactiveLabel("\uf015", id="homed")
-                yield ReactiveLabel("\udb80\uddfa".encode('utf-16','surrogatepass').decode('utf-16'), id="motors")
-                #\udb82\ude46
-                yield ReactiveLabel("\udb85\udedf".encode('utf-16','surrogatepass').decode('utf-16'), id="filament")
+                yield ReactiveLabel("Home", id="homed")
+                yield ReactiveLabel("Step", id="motors")
+
+                yield ReactiveLabel("Fil", id="filament")
                 yield Static()
                 yield ReactiveLabel("Load", id="sysload")
     

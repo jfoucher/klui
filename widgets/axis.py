@@ -5,22 +5,20 @@ from textual.reactive import reactive
 from textual.containers import Container, Horizontal
 from textual.validation import Number
 from textual.message import Message
+from widgets.button import SmallButton
+
 
 class CurrentPos(Label):
     """Show current position"""
-
-    pos = reactive("0")
+    pos = reactive(0.0)
 
     def render(self) -> str:
-        return f"{self.pos}"
-
-    async def on_mount(self):
-        self.styles.width = 6
-        self.styles.margin = 1
-
-class Axis(Widget):
+        return " {:3.0f}mm".format(self.pos)
+class Axis(Widget, can_focus=True):
     """Show axis home button and position"""
 
+    homed = reactive(False)
+    position = reactive(0.0)
     class ChangePosition(Message):
         """Sent when the set position changes."""
 
@@ -32,17 +30,19 @@ class Axis(Widget):
     # pass axis name in d
     def compose(self) -> ComposeResult:
         id = self.id.replace("axis_", "")
-        with Container():
-            with Horizontal():
-                yield Button(id.capitalize(), classes="home_button", id=f"home_{id}_button", variant="warning")
-                yield CurrentPos()
-                yield Input(
-                    placeholder="0.0",
-                    validators=[
-                        Number(minimum=0, maximum=350),
-                    ],
-                    classes="pos_input",
-                )
+
+        with Horizontal():
+            yield Label(f"{id.upper()}", classes="axis_name")
+            yield Label(f" Homed", classes="axis_homed")
+            yield CurrentPos(classes='axis_pos')
+
+    def on_key(self, event):
+        print(self.id, event.key)
+        if event.key and (event.key == 'h' or event.key == 'H'):
+            ax = self.id.replace("axis_", "")
+            print(f"home {ax} axis")
+        else:
+            self.app.get_screen('toolhead').post_message(event)
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         # Validate input temperature

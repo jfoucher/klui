@@ -22,10 +22,12 @@ KLUI is a simple controller for a klipper-enabled 3D printer. It requires the Mo
 All shortcuts have the first letter highlighted, representing the key to be pressed to trigger the action.
 
 Most shortcuts are displayed in the app footer.
-For example, press the `q` key to exit the app. The will popup a confirmation dialog. press `q` again to quit, or `c` to cancel.
+For example, press the `F2` key to exit the app. The will popup a confirmation dialog. press `q` to quit, or `c` to cancel.
 If you have a mouse, you can also click on the shortcuts as if they were buttons to trigger the action.
 
 You can also press `escape` to exit any modal window that may be open to return to the main screen.
+
+When you are in another screen, regular shortcuts are disabled. The only one that will always function is the `F8` key that will trigger an emergency stop. 
 """
 
 
@@ -43,7 +45,7 @@ class HelpScreen(ModalScreen):
 
 
     def on_key(self, event):
-        if event.key and (event.key == "c" or event.key == "escape"):
+        if event.key and (event.key == "C" or event.key == "c" or event.key == "escape"):
             self.app.pop_screen()
 
     def on_small_button_pressed(self, event: SmallButton.Pressed) -> None:

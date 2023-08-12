@@ -1,7 +1,7 @@
 from textual.app import App, ComposeResult
 
 from textual.widget import Widget
-
+from textual.reactive import reactive
 from textual.containers import Horizontal
 from widgets.button import SmallButton
 from rich.text import Text
@@ -30,21 +30,29 @@ class KluiFooter(Widget, can_focus=True):
     }
     """
 
-    buttons = [
-        'Quit',
+    buttons = reactive([
         'Help',
+        'Quit',
         'Toolhead',
         'Print',
         'Extruder',
         'Misc',
         'Console',
+        '',
+        '',
         'STOP',
-    ]
+    ])
+
+    def __init__(self, *children: Widget, name: str | None = None, id: str | None = None, classes: str | None = None, disabled: bool = False, buttons: list|None = None) -> None:
+        super().__init__(*children, name=name, id=id, classes=classes, disabled=disabled)
+        if buttons:
+            self.buttons = buttons
 
     def compose(self) -> ComposeResult:
         with Horizontal():
-            for button in self.buttons:
-                yield SmallButton(self.generate_button_markup(button), id=button.lower())
+            for i, button in enumerate(self.buttons):
+                if button:
+                    yield SmallButton(self.generate_button_markup(button, i), id=button.lower())
 
     async def on_small_button_pressed(self, event: SmallButton.Pressed):
         try:
@@ -55,7 +63,22 @@ class KluiFooter(Widget, can_focus=True):
         except AttributeError:
             print(f"action_{action} not found")
 
-    def generate_button_markup(self, label):
+    async def on_key(self, event):
+        if not event.key or 'f' not in event.key:
+            return
+        num = int(event.key.replace('f', '')) - 1
+        action = self.buttons[num].lower()
+        print
+        try:
+            action = "request_quit" if action == "quit" else action
+            func = getattr(self.app, f"action_{action.replace(' ', '_')}")
+
+            await func()
+        except AttributeError:
+            print(f"action_{action.replace(' ', '_')} not found")
+
+
+    def generate_button_markup(self, label, i):
         text = Text()
         key_style = self.get_component_rich_style("footer--key")
         description_style = self.get_component_rich_style("footer--description")
@@ -63,9 +86,9 @@ class KluiFooter(Widget, can_focus=True):
         base_style = self.rich_style
 
         key_text = Text.assemble(
-                (f" {label[0]}", key_style),
+                (f" {i+1}", key_style),
                 (
-                    f"{label[1:]}  ",
+                    f"{label}  ",
                     base_style + description_style,
                 ),
                 meta={
