@@ -18,7 +18,11 @@ class Job(Label):
     def set_filename(self, name):
         self.query_one('#name').label = '[b]' + name + '[/]'
 
-    def set_meta(self, time, fil_length, fil_weight):
-        t = str(datetime.timedelta(seconds=round(time)))
-        self.query_one('#time').label = f"[dark_turquoise]Print time:[/] {t} [dark_orange3]Fil length:[/] {round(fil_length)}mm, {round(fil_weight)}g"
+    def set_meta(self, t, fil_length, fil_weight):
+        hours, remainder = divmod(t, 60*60)
+        minutes, seconds = divmod(remainder, 60)
+        time = f"{round(minutes)}m{round(seconds)}s"
+        if hours > 0:
+            time = f"{round(hours)}h" + time
+        self.query_one('#time').label = f"[dark_turquoise]Print time:[/] {time} [dark_orange3]Fil length:[/] {round(fil_length)}mm, {round(fil_weight)}g"
             

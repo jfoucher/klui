@@ -387,6 +387,7 @@ class KluiScreen(Screen):
                 "objects": self.printer.objects
             },
         })
+    
 
 class Klui(App):
     SCREENS = {

@@ -90,8 +90,6 @@ class ToolheadScreen(Screen):
                 else:
                     ax.classes = 'axis unselected'
                 ax.refresh()
-
-
         elif event.key and event.key == "f1":
             self.app.push_screen(ToolhelpScreen())
         else:
