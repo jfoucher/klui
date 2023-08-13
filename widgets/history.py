@@ -11,7 +11,7 @@ from screens.print import PrintScreen
 class KluiHistory(Widget):
     jobs = []
     selected_job = reactive(0)
-    NUM_JOBS = 10
+    NUM_JOBS = 5
 
     def compose(self) -> ComposeResult:
         yield Label("Files", classes="title")
