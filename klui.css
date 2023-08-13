@@ -17,9 +17,9 @@ HozizontalScroll {
     align: center middle;
     text-align: center;
     width: 100%;
-    padding: 1;
+    padding: 0;
     text-style: bold;
-    background: $error;
+    background: coral;
 }
 .dialog {
     grid-size: 2;
@@ -30,6 +30,14 @@ HozizontalScroll {
     border: thick $background 80%;
     background: $surface;
     content-align: center middle;
+}
+
+.dialog_btns {
+    dock: bottom;
+}
+.dialog_button {
+    width: 1fr;
+    
 }
 
 #quit_dialog {
@@ -215,4 +223,20 @@ Heater TempName, TemperatureFan TempName {
 
 .temperature {
     height: 2
+}
+#temperature, #history {
+    margin:0;
+    padding:0;
+    height: 1fr;
+}
+
+Job Vertical {
+    width:6fr;
+}
+Job Horizontal {
+    height:2;
+}
+Job #status {
+    width: 1fr;
+    color: $text-muted
 }

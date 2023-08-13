@@ -23,6 +23,8 @@ from widgets.header import KluiHeader, Connected
 from widgets.footer import KluiFooter
 from widgets.temperature import KluiTemperature
 from textual.screen import Screen
+from screens.connect import ConnectScreen
+from widgets.history import KluiHistory
 
 class Printer():
     objects = {}
@@ -67,6 +69,7 @@ class KluiScreen(Screen):
             yield KluiHeader(id="header")
             with Container(id='container'):
                 yield KluiTemperature(id='temperature')
+                yield KluiHistory(id='history')
             yield KluiFooter(id='footer')
 
 
@@ -130,6 +133,7 @@ class KluiScreen(Screen):
                             await self.identify()
                             await self.update_status()
                             await self.get_printer_objects()
+                            await self.get_history()
 
                     message = json.loads(res)
 
@@ -155,6 +159,7 @@ class KluiScreen(Screen):
                 await self.identify()
                 await self.update_status()
                 await self.get_printer_objects()
+                await self.get_history()
                 continue
 
 
@@ -216,23 +221,37 @@ class KluiScreen(Screen):
 
         if method == "server.info":
             self.status = message['result']
+            print('server.info', self.status)
             if self.status and self.status['klippy_connected'] == True  and self.status['klippy_state'] == "ready":
                 self.query_one(Connected).connected = "✔"
                 self.query_one(Connected).styles.background = "green"
                 self.printer.connected = True
                 self.printer.update({'connected': True})
+                if self.app.get_screen('connect').is_current:
+                    self.app.get_screen('connect').remove_screen()
+                #await self.printer_subscribe()
+            elif self.status and self.status['klippy_state'] == 'shutdown':
+                if not self.app.get_screen('connect').is_current:
+                    self.app.push_screen('connect')
         elif method == "printer.emergency_stop" or method == "notify_klippy_shutdown":
             self.printer.update({'connected': False })
             self.query_one(Connected).connected = "✕"
             self.query_one(Connected).styles.background = "red"
             self.printer.connected = False
             self.printer.update({'connected': False})
+            if not self.app.get_screen('connect').is_current:
+                self.app.push_screen('connect')
+            # Show reconnect screen
         elif method == "notify_klippy_ready":
+            print('notify_klippy_ready')
             self.printer.update({'connected': True })
             self.query_one(Connected).connected = "✔"
             self.query_one(Connected).styles.background = "green"
             self.printer.connected = True
             self.printer.update({'connected': True})
+            if self.app.get_screen('connect').is_current:
+                self.app.get_screen('connect').remove_screen()
+            await self.printer_subscribe()
         elif method == "printer.objects.list":
             self.printer.objects = dict.fromkeys(message['result']['objects'], None)
             await self.get_printer_objects_details()
@@ -241,6 +260,10 @@ class KluiScreen(Screen):
             # for line in message['params']:
             #     self.query_one('#right').add_line(line)
             print(message['params'])
+        elif method == "server.history.list":
+            print('server history')
+            data = message['result']['jobs']
+            await self.query_one('#history').update(data)
         elif method == "printer.objects.query":
             await self.printer_subscribe()
 
@@ -293,6 +316,7 @@ class KluiScreen(Screen):
         await self.identify()
         await self.update_status()
         await self.get_printer_objects()
+        await self.get_history()
         # await self.sensors_list()
         # await self.temp_store()
         
@@ -346,6 +370,16 @@ class KluiScreen(Screen):
                 "objects": self.printer.objects
             },
         })
+    async def get_history(self):
+        await self.message_queue.put({
+            "method":"server.history.list",
+            "params":{
+                "limit": 100,
+                "start": 0,
+                "since": 0,
+                "order": "desc"
+            },
+        })
     async def printer_subscribe(self):
         await self.message_queue.put({
             "method":"printer.objects.subscribe",
@@ -361,6 +395,7 @@ class Klui(App):
         "toolhelp": ToolhelpScreen(),
         "toolhead": ToolheadScreen(),
         "quit": QuitScreen(),
+        'connect': ConnectScreen(),
     }
 
     CSS_PATH = "klui.css"

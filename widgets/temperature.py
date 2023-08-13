@@ -6,7 +6,8 @@ from textual.reactive import reactive
 from widgets.temp import Heater, TemperatureFan
 
 class KluiTemperature(Widget):
-    heaters = reactive(['extruder'])
+
+    count = 0
 
     def compose(self) -> ComposeResult:
         yield Label("Temperatures", classes="title")
@@ -14,9 +15,10 @@ class KluiTemperature(Widget):
     async def update(self, data):
         for heater in self.query(Heater):
             heater.update(data)
-        
         for fan in self.query(TemperatureFan):
             fan.update(data)
+
+        
         if 'heaters' in data and 'available_heaters' in data['heaters']:
             for heater in data['heaters']['available_heaters']:
                 try :
@@ -28,7 +30,7 @@ class KluiTemperature(Widget):
                     )
                     
                     await self.mount(tmp)
-
+                self.count += 1
                 tmp.set_name(heater.replace('_', ' ').title())
                 if 'target' in data[heater]:
                     tmp.set_set_temp(data[heater]['target'])
@@ -56,6 +58,7 @@ class KluiTemperature(Widget):
                     )
                     
                     await self.mount(tmp)
+                self.count += 1
                 tmp.set_name(sensor_name.replace('_', ' ').title())
                 if 'target' in data[sensor]:
                     tmp.set_set_temp(data[sensor]['target'])
@@ -65,3 +68,4 @@ class KluiTemperature(Widget):
                     tmp.set_power(data[sensor]['speed'])
                 if 'configfile' in data and 'settings' in data['configfile'] and sensor in data['configfile']['settings'] and 'max_temp' in data['configfile']['settings'][sensor]:
                     tmp.set_max_temp(data['configfile']['settings'][sensor]['max_temp'])
+        self.styles.height = self.count * 2

@@ -60,6 +60,9 @@ class ToolheadScreen(Screen):
     def on_mount(self):
         self.query_one("#axis_x").classes = 'axis selected'
 
+    def on_input_changed(self, event: Input.Changed):
+        print(event)
+
     async def on_input_submitted(self, event: Input.Submitted):
         if event.input.id == 'part_fan_input':
             await self.app.get_screen('main').message_queue.put({
