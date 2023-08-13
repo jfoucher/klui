@@ -25,15 +25,15 @@ class PrintScreen(ModalScreen):
 
         yield Grid(
             Label(f"Please confirm to start a print of [bold dark_orange3]{self.job['filename']}[/]\nEstimated print time is {time} with a filament use of {self.job['metadata']['filament_weight_total']}g", id="question"),
-            SmallButton('Print', id="print", classes="action"),
             SmallButton('Cancel', id="close", classes='cancel'),
+            SmallButton('Print', id="print", classes="action"),
             id="print_dialog",
             classes="dialog"
         )
     
     async def print(self):
         self.query_one('#print').remove()
-        await self.mount(LoadingIndicator(), after=self.query_one(Label))
+        await self.mount(LoadingIndicator(), after=self.query_one('#question'))
         await self.app.get_screen('main').message_queue.put({
             "method":"printer.print.start",
             "params":{

@@ -52,7 +52,7 @@ class KluiHistory(Widget):
             
 
     def on_key(self, event):
-        if event.key and event.key == "up":
+        if event.key and (event.key == "up" or event.key == 'k'):
             self.selected_job -= 1
             if self.selected_job < 0:
                 self.selected_job = 0
@@ -62,7 +62,7 @@ class KluiHistory(Widget):
                 else:
                     ax.classes = 'job unselected'
                 ax.refresh()
-        elif event.key and event.key == "down":
+        elif event.key and (event.key == "down" or event.key == 'j'):
             self.selected_job += 1
             if self.selected_job >= self.NUM_JOBS:
                 self.selected_job = self.NUM_JOBS-1
