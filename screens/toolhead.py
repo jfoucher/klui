@@ -93,7 +93,7 @@ class ToolheadScreen(Screen):
         elif event.key and event.key == "f1":
             self.app.push_screen(ToolhelpScreen())
         else:
-            self.query_one(KluiFooter).post_message(event)
+            self.app.post_message(event)
 
 
     async def home_all(self):

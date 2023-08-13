@@ -38,14 +38,11 @@ When you are in another screen, regular shortcuts are disabled. The only one tha
 class HelpScreen(ModalScreen):
     """Screen with a dialog to show help."""
     def compose(self) -> ComposeResult:
-        cancel = Text()
-        cancel.append("C", style="bold green on white")
-        cancel.append("lose")
         with Vertical(id="help_dialog", classes="dialog"):
             with VerticalScroll():
                 yield MarkdownViewer(HELP_TEXT, show_table_of_contents=False)
 
-            yield SmallButton(cancel, id="cancel")
+            yield SmallButton('Close', id="cancel", classes='cancel')
 
 
     def on_key(self, event):

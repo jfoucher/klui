@@ -1,7 +1,7 @@
 from textual.app import ComposeResult
-from textual.widgets import MarkdownViewer
+from textual.widgets import MarkdownViewer, Button
 
-from textual.containers import Vertical, VerticalScroll
+from textual.containers import Vertical, VerticalScroll, Container
 from widgets.button import SmallButton
 from textual.screen import ModalScreen
 from rich.text import Text
@@ -30,14 +30,10 @@ Pressing the up and down arrow keys will select one of the axes.
 class ToolhelpScreen(ModalScreen):
     """Screen with a dialog to show help."""
     def compose(self) -> ComposeResult:
-        cancel = Text()
-        cancel.append("C", style="bold green on white")
-        cancel.append("lose")
-        with Vertical(id="help_dialog", classes="dialog"):
+        with Container(id="help_dialog", classes="dialog"):
             with VerticalScroll():
                 yield MarkdownViewer(HELP_TEXT, show_table_of_contents=False)
-
-            yield SmallButton(cancel, id="cancel")
+            yield SmallButton('Close', id="cancel", classes='cancel')
 
 
     def on_key(self, event):

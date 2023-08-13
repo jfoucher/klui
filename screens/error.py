@@ -14,13 +14,11 @@ class ErrorScreen(ModalScreen):
 
     """Screen with a dialog to quit."""
     def compose(self) -> ComposeResult:
-        cancel = Text()
-        cancel.append("C", style="bold green on white")
-        cancel.append("lose")
+
 
         yield Vertical(
             Label(self.text, id="question"),
-            SmallButton(cancel, id="close"),
+            SmallButton('Close', id="close", classes='cancel'),
             id="error_dialog",
             classes="dialog"
         )

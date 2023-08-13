@@ -9,16 +9,10 @@ from rich.text import Text
 class QuitScreen(ModalScreen):
     """Screen with a dialog to quit."""
     def compose(self) -> ComposeResult:
-        cancel = Text()
-        cancel.append("C", style="bold green on white")
-        cancel.append("ancel")
-        quit = Text()
-        quit.append("Q", style="bold red on white")
-        quit.append("uit")
         yield Grid(
             Label("Are you sure you want to quit?", id="question"),
-            SmallButton(quit, id="quit"),
-            SmallButton(cancel, id="close"),
+            SmallButton('Quit', id="quit", classes='action'),
+            SmallButton('Cancel', id="close", classes='cancel'),
             id="quit_dialog",
             classes="dialog"
         )

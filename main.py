@@ -458,6 +458,15 @@ class Klui(App):
     def on_mount(self):
         self.push_screen("main")
 
+    async def on_key(self, event):
+        # Pass key events to footer by default
+        print('app key handler')
+        main_screens = ['main', 'toolhead']
+        for screen in main_screens:
+            s = self.get_screen(screen)
+            if s.is_current:
+                s.query_one(KluiFooter).post_message(event)
+
     async def action_request_quit(self) -> None:
         """Action to display the quit dialog."""
         self.push_screen('quit')
@@ -490,7 +499,8 @@ class Klui(App):
         await s.update_status()
     
     async def action_close(self):
-        self.pop_screen()
+        if not self.get_screen('main').is_current:
+            self.pop_screen()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("klui")

@@ -25,8 +25,8 @@ class PrintScreen(ModalScreen):
 
         yield Grid(
             Label(f"Please confirm to start a print of [bold dark_orange3]{self.job['filename']}[/]\nEstimated print time is {time} with a filament use of {self.job['metadata']['filament_weight_total']}g", id="question"),
-            SmallButton('[bold red on white]P[/]rint', id="print"),
-            SmallButton('[bold green on white]C[/]ancel', id="close"),
+            SmallButton('Print', id="print", classes="action"),
+            SmallButton('Cancel', id="close", classes='cancel'),
             id="print_dialog",
             classes="dialog"
         )
@@ -48,6 +48,7 @@ class PrintScreen(ModalScreen):
             self.app.pop_screen()
         elif event.key and(event.key == "P" or event.key == "p"):
             await self.print()
+
 
     async def on_small_button_pressed(self, event: SmallButton.Pressed) -> None:
         if event.id == "print":

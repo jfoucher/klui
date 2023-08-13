@@ -7,7 +7,7 @@ from widgets.button import SmallButton
 from rich.text import Text
 from typing import ClassVar
 import rich.repr
-from widgets.button import SmallButton
+from widgets.button import SmallButtonNoFocus
 
 @rich.repr.auto
 class KluiFooter(Widget, can_focus=True):
@@ -52,7 +52,7 @@ class KluiFooter(Widget, can_focus=True):
         with Horizontal():
             for i, button in enumerate(self.buttons):
                 if button:
-                    yield SmallButton(self.generate_button_markup(button, i), id=button.lower())
+                    yield SmallButtonNoFocus(self.generate_button_markup(button, i), id=button.lower())
 
     async def on_small_button_pressed(self, event: SmallButton.Pressed):
         try:
@@ -71,7 +71,7 @@ class KluiFooter(Widget, can_focus=True):
             return
         num = int(event.key.replace('f', '')) - 1
         action = self.buttons[num].lower()
-        print
+
         try:
             action = "request_quit" if action == "quit" else action
             func = getattr(self.app, f"action_{action.replace(' ', '_')}")

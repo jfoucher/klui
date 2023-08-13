@@ -6,14 +6,19 @@ HelpScreen, ToolhelpScreen {
     align: center middle;
 }
 
-
-VerticalScroll {
-    scrollbar-size: 1 1;
+HelpScreen SmallButton, ToolhelpScreen SmallButton{
+    height: 1;
+    margin-top: 1;
 }
 
-HozizontalScroll {
+
+VerticalScroll, HozizontalScroll {
     scrollbar-size: 1 1;
 }
+VerticalScroll:focus, HozizontalScroll:focus {
+    background: $background-lighten-1;
+}
+
 .title {
     align: center middle;
     text-align: center;
@@ -44,6 +49,9 @@ HozizontalScroll {
     width: 1fr;
     
 }
+/* *:focus{
+    background: red !important;
+} */
 
 #quit_dialog {
     height:6;
@@ -57,19 +65,55 @@ QuitScreen, PrintScreen {
     width: 80%;
 }
 
-SmallButton {
+/* SmallButton {
     height:1;
-    padding:0;
+    padding:0 ;
     margin:0;
-
-    
+    width: auto;
+    background: red;
     content-align: center middle;
+    align: center middle;
+} */
+SmallButton > Container{
+    height:1;
+    content-align: center middle;
+    align: center middle;
 }
-SmallButton:focus {
-    text-style: underline;
+SmallButton  Horizontal{
+    height:1;
+    width: auto;
+    color: $text-muted;
+    background: red;
+    content-align: center middle;
+    align: center middle;
 }
+SmallButton:focus Horizontal {
+    background: green;
+    color: $text;
+}
+SmallButton .shortcut {
+    background: $background-lighten-3;
+    text-style: bold;
+}
+SmallButton:focus .shortcut {
+    background: $foreground-darken-2;
+}
+SmallButton.action .shortcut {
+    color: red;
+}
+SmallButton.cancel .shortcut {
+    color: forestgreen;
+}
+SmallButton .text {
+    background: $background-lighten-3;
+}
+
+
 KluiFooter SmallButton {
     width: auto;
+}
+KluiFooter SmallButton > Container{
+    align: left middle;
 }
 
 #question {

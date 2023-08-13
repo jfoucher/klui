@@ -9,16 +9,10 @@ from rich.text import Text
 class ConnectScreen(ModalScreen):
     """Screen with a dialog to quit."""
     def compose(self) -> ComposeResult:
-        cancel = Text()
-        cancel.append("C", style="bold green on white")
-        cancel.append("ancel")
-        restart = Text()
-        restart.append("R", style="bold red on white")
-        restart.append("estart")
         yield Grid(
             Label("Klippy reports shutdown\n\nShutdown due to webhooks request\n\nOnce the underlying issue is corrected, click [b]R[/]estart or press [b]R[/] to reset the firmware, reload the config, and restart the host software.\n\nPrinter is shutdown", id="question"),
-            SmallButton(restart, id="restart"),
-            SmallButton(cancel, id="close"),
+            SmallButton("Restart", id="restart", classes="action"),
+            SmallButton("Cancel", id="close", classes="cancel"),
             
             classes="dialog"
         )
@@ -31,7 +25,7 @@ class ConnectScreen(ModalScreen):
             },
         })
         self.query_one('#restart').remove()
-        self.mount(LoadingIndicator(), after=self.query_one(Label))
+        self.mount(LoadingIndicator(), after=self.query_one('#question'))
 
     async def on_key(self, event):
         if event.key and(event.key == "C" or event.key == "c" or event.key == "escape"):
@@ -47,7 +41,7 @@ class ConnectScreen(ModalScreen):
         try:
             self.query_one('#restart')
         except:
-            self.mount(SmallButton("[bold red on white]R[/]estart", id="restart"), after=self.query_one(Label))
+            self.mount(SmallButton("Restart", id="restart", classes='action'), after=self.query_one('#question'))
         self.app.pop_screen()
     
     async def on_small_button_pressed(self, event: SmallButton.Pressed) -> None:

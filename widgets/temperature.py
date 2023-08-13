@@ -68,4 +68,7 @@ class KluiTemperature(Widget):
                     tmp.set_power(data[sensor]['speed'])
                 if 'configfile' in data and 'settings' in data['configfile'] and sensor in data['configfile']['settings'] and 'max_temp' in data['configfile']['settings'][sensor]:
                     tmp.set_max_temp(data['configfile']['settings'][sensor]['max_temp'])
-        self.styles.height = self.count * 2
+        
+
+        self.styles.height = self.count * 2 + 1
+        print('temp height', self.styles.height)
