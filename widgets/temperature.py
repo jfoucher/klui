@@ -30,7 +30,7 @@ class KluiTemperature(Widget):
                     )
                     
                     await self.mount(tmp)
-                self.count += 1
+                    self.count += 1
                 tmp.set_name(heater.replace('_', ' ').title())
                 if 'target' in data[heater]:
                     tmp.set_set_temp(data[heater]['target'])
@@ -58,7 +58,7 @@ class KluiTemperature(Widget):
                     )
                     
                     await self.mount(tmp)
-                self.count += 1
+                    self.count += 1
                 tmp.set_name(sensor_name.replace('_', ' ').title())
                 if 'target' in data[sensor]:
                     tmp.set_set_temp(data[sensor]['target'])
@@ -71,4 +71,4 @@ class KluiTemperature(Widget):
         
 
         self.styles.height = self.count * 2 + 1
-        print('temp height', self.styles.height)
+

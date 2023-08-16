@@ -17,19 +17,18 @@ class ToolheadScreen(Screen):
     selected_axis = reactive(0)
     footer_buttons = [
         'Help',
-        'Home',
+        'Quit',
         'Close',
-        'All',
+        'Home',
+        'Home All',
         'Set',
         'Move',
         'QGL',
-        '',
         '',
         'STOP',
     ]
     """Screen with a dialog to show toolhead info, such as position, home buttons, etc."""
     def compose(self) -> ComposeResult:
-        # TODO, control part fan with M106 S0 to M106 S255
         with Vertical(id="toolhead_screen"):
             yield KluiHeader(id="header")
             with Vertical(id='container'):
@@ -91,7 +90,9 @@ class ToolheadScreen(Screen):
                     ax.classes = 'axis unselected'
                 ax.refresh()
         elif event.key and event.key == "f1":
-            self.app.push_screen(ToolhelpScreen())
+            self.app.push_screen('toolhelp')
+        elif event.key and event.key == "f2":
+            self.app.push_screen('quit')
         else:
             self.app.post_message(event)
 
@@ -138,10 +139,10 @@ class ToolheadScreen(Screen):
             except:
                 pass
 
-            self.footer_buttons =['' if x == 'QGL' else x for x in self.footer_buttons]
+            self.footer_buttons = ['' if x == 'QGL' else x for x in self.footer_buttons]
 
             try:
-                self.query_one('#toolhead_screen').mount(KluiFooter(id='footer', buttons=btns))
+                self.query_one('#toolhead_screen').mount(KluiFooter(id='footer', buttons=self.footer_buttons))
             except:
                 pass
 
@@ -161,12 +162,20 @@ class ToolheadScreen(Screen):
             except:
                 pass
 
-        if 'motion_report' in data:
+        elif 'motion_report' in data:
             if 'live_position' in data['motion_report']:
                 for i, axis in enumerate(["x", "y", "z"]):
                     try:
                         a = self.query_one(f"#axis_{axis}").query_one('.axis_pos')
                         a.pos = data['motion_report']['live_position'][i]
+                    except:
+                        pass
+        elif 'gcode_move' in data:
+            if 'gcode_position' in data['gcode_move']:
+                for i, axis in enumerate(["x", "y", "z"]):
+                    try:
+                        a = self.query_one(f"#axis_{axis}").query_one('.axis_pos')
+                        a.pos = data['gcode_move']['gcode_position'][i]
                     except:
                         pass
         elif 'toolhead' in data:

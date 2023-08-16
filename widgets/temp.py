@@ -129,7 +129,7 @@ class Heater(Widget):
         # Validate input temperature
         self.app.query_one('#footer').focus()
         if len(event.validation_result.failures) == 0:
-            self.set_set_temp(float(event.value))
+            #self.set_set_temp(float(event.value))
             self.post_message(Heater.ChangeSetTemp(temp=float(event.value), id=self.id))
         else:
             print(event.validation_result.failures[0].description)
@@ -196,7 +196,7 @@ class TemperatureFan(Widget):
         # Validate input temperature
         self.app.query_one('#footer').focus()
         if len(event.validation_result.failures) == 0:
-            self.set_set_temp(float(event.value))
+            #self.set_set_temp(float(event.value))
             self.post_message(TemperatureFan.ChangeSetTemp(temp=float(event.value), id=self.id.replace("temperature_fan", "")))
         else:
             print(event.validation_result.failures[0].description)

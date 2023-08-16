@@ -68,8 +68,9 @@ class KluiScreen(Screen):
         with Vertical():
             yield KluiHeader(id="header")
             with Container(id='container'):
-                yield KluiTemperature(id='temperature')
                 yield KluiHistory(id='history')
+                yield KluiTemperature(id='temperature')
+                
             yield KluiFooter(id='footer')
 
 
@@ -229,7 +230,7 @@ class KluiScreen(Screen):
                 self.printer.update({'connected': True})
                 if self.app.get_screen('connect').is_current:
                     self.app.get_screen('connect').remove_screen()
-                #await self.printer_subscribe()
+
             elif self.status and self.status['klippy_state'] == 'shutdown':
                 if not self.app.get_screen('connect').is_current:
                     self.app.push_screen('connect')
@@ -251,7 +252,10 @@ class KluiScreen(Screen):
             self.printer.update({'connected': True})
             if self.app.get_screen('connect').is_current:
                 self.app.get_screen('connect').remove_screen()
-            await self.printer_subscribe()
+            await self.identify()
+            await self.update_status()
+            await self.get_printer_objects()
+            await self.get_history()
         elif method == "printer.objects.list":
             self.printer.objects = dict.fromkeys(message['result']['objects'], None)
             await self.get_printer_objects_details()
@@ -460,7 +464,6 @@ class Klui(App):
 
     async def on_key(self, event):
         # Pass key events to footer by default
-        print('app key handler')
         main_screens = ['main', 'toolhead']
         for screen in main_screens:
             s = self.get_screen(screen)

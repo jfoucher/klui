@@ -92,22 +92,22 @@ class KluiHeader(Widget):
                     # other states
                     self.query_one('#status').styles.background = 'darkgray'
             self.query_one('#status').label = state.title()
-        elif 'idle_timeout' in data and 'state' in data['idle_timeout']:
-            # use print_stats instead
-            state = data['idle_timeout']['state']
-            if state == 'Printing':
-                self.query_one('#file').styles.display = "block"
-                self.query_one('#completion').styles.display = "block"
-                self.query_one('#status').styles.background = 'green'
-            else:
-                self.query_one('#file').styles.display = "none"
-                self.query_one('#completion').styles.display = "none"
-                if state == 'Idle':
-                    self.query_one('#status').styles.background = 'darkgray'
-                else:
-                    # Ready state
-                    self.query_one('#status').styles.background = 'darkcyan'
-            self.query_one('#status').label = state
+        # elif 'idle_timeout' in data and 'state' in data['idle_timeout']:
+        #     # use print_stats instead
+        #     state = data['idle_timeout']['state']
+        #     if state == 'Printing':
+        #         self.query_one('#file').styles.display = "block"
+        #         self.query_one('#completion').styles.display = "block"
+        #         self.query_one('#status').styles.background = 'green'
+        #     else:
+        #         self.query_one('#file').styles.display = "none"
+        #         self.query_one('#completion').styles.display = "none"
+        #         if state == 'Idle':
+        #             self.query_one('#status').styles.background = 'darkgray'
+        #         else:
+        #             # Ready state
+        #             self.query_one('#status').styles.background = 'darkcyan'
+        #     self.query_one('#status').label = state
         if 'toolhead' in data:
             if 'homed_axes' in data['toolhead']:
                 homed = data['toolhead']['homed_axes']
@@ -141,6 +141,9 @@ class KluiHeader(Widget):
 
         for k in data.keys():
             if 'filament_switch_sensor' in k and 'filament_detected' in data[k]:
+                if data[k]['enabled'] == False:
+                    self.query_one('#filament').styles.background = 'grey'
+                    break
                 if data[k]['filament_detected']:
                     self.query_one('#filament').styles.background = 'green'
                 else: 

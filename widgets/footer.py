@@ -11,10 +11,6 @@ from widgets.button import SmallButtonNoFocus
 
 @rich.repr.auto
 class KluiFooter(Widget, can_focus=True):
-    COMPONENT_CLASSES: ClassVar[set[str]] = {
-        "footer--description",
-        "footer--key",
-    }
     DEFAULT_CSS = """
     KluiFooter {
         background: $accent;
@@ -23,11 +19,7 @@ class KluiFooter(Widget, can_focus=True):
         height: 1;
     }
 
-    KluiFooter > .footer--key {
-        text-style: bold;
-        background: $accent-darken-3;
-        color: $text;
-    }
+    
     """
 
     buttons = reactive([
@@ -52,7 +44,7 @@ class KluiFooter(Widget, can_focus=True):
         with Horizontal():
             for i, button in enumerate(self.buttons):
                 if button:
-                    yield SmallButtonNoFocus(self.generate_button_markup(button, i), id=button.lower())
+                    yield self.generate_button_markup(button, i)
 
     async def on_small_button_pressed(self, event: SmallButton.Pressed):
         try:
@@ -82,11 +74,9 @@ class KluiFooter(Widget, can_focus=True):
 
 
     def generate_button_markup(self, label, i):
+        return SmallButtonNoFocus("", shortcut=str(i+1), text = label, id=label.lower())
+        return f"{i+1}{label}"
         text = Text()
-        key_style = self.get_component_rich_style("footer--key")
-        description_style = self.get_component_rich_style("footer--description")
-
-        base_style = self.rich_style
 
         key_text = Text.assemble(
                 (f" {i+1}", key_style),

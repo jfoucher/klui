@@ -14,7 +14,7 @@ class KluiHistory(Widget):
     NUM_JOBS = 5
 
     def compose(self) -> ComposeResult:
-        yield Label("Files", classes="title")
+        yield Label("Job history", classes="title")
         yield VerticalScroll(id='files')
 
     async def update(self, data):
@@ -32,15 +32,18 @@ class KluiHistory(Widget):
 
         self.jobs = list(jobs.values())
         async def get_widget(job) -> Job:
-            tmp = Job(
-                job['job_id'] + ' ' + job['filename'],
-                id='job_'+job['job_id'],
-                classes="job",
-            )
+            try:
+                tmp = self.query_one('#job_'+job['job_id'])
+            except:
+                tmp = Job(
+                    job['job_id'] + ' ' + job['filename'],
+                    id='job_'+job['job_id'],
+                    classes="job",
+                )
 
-            await self.query_one('#files').mount(tmp)
+                await self.query_one('#files').mount(tmp)
             tmp.set_filename('[b]'+job['filename']+'[/]')
-            print(job)
+
             tmp.set_meta(job['print_duration'], job['filament_used'], job['metadata']['filament_weight_total'])
             tmp.query_one('#status').label = job['status'].title()
             return self.query_one('#job_'+job['job_id'])
@@ -49,7 +52,21 @@ class KluiHistory(Widget):
         results = await asyncio.gather(*map(get_widget, jobs.values()))
         self.query(Job).first().classes = 'job selected'
 
-            
+    def print(self):
+        self.app.push_screen(PrintScreen(self.jobs[self.selected_job]))
+
+    def select_job(self, id):
+        # get job index from id
+        i = None
+        for n, j in enumerate(self.query(Job).results()):
+            if j.id == id:
+                i = n
+                j.classes = 'job selected'
+            else:
+                j.classes = 'job unselected'
+        if i != None:
+            self.selected_job = i
+
 
     def on_key(self, event):
         if event.key and (event.key == "up" or event.key == 'k'):
@@ -72,6 +89,6 @@ class KluiHistory(Widget):
                 else:
                     ax.classes = 'job unselected'
                 ax.refresh()
-        elif event.key and event.key == "enter":
+        elif event.key and (event.key == "enter" or event.key =='f4'):
             # print('will print ', self.jobs[self.selected_job]['filename'])
             self.app.push_screen(PrintScreen(self.jobs[self.selected_job]))
